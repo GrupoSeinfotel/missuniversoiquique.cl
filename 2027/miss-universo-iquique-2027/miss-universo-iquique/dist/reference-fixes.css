@@ -1,0 +1,18 @@
+.reference-hero .large-mark{height:auto;min-width:0;padding:0}
+.reference-hero .large-mark .mark-symbol{position:relative}
+.reference-hero .scene-copy{isolation:isolate}
+.ref-photo-mosaic button:focus-visible,.ref-profile-tabs button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.reference-hero .hero-city,.reference-hero .campaign-line{text-shadow:0 0 7px #fff,0 1px 3px #fff;filter:drop-shadow(0 0 3px #fff)}
+@media(min-width:951px){.ref-profile-hero{overflow:hidden}.ref-profile-muse{height:135%;bottom:-35%;width:50%;left:-4%}}
+.ref-page h2,.ref-vote-box h2{letter-spacing:.5px}
+.ref-candidate-tile.candidate{padding:0}
+.ref-candidate-tile.candidate h3{padding:0}
+.hero-slide-index button{font-size:9px;color:#d0e2ff;background:none;border:0;border-bottom:1px solid #b5caff66;padding:6px 10px;cursor:pointer}
+.hero-slide-index button[aria-pressed=true]{color:#fff;border-bottom:2px solid #f96df4;text-shadow:0 0 10px #ee3bef}
+.reference-hero.look-dark .scene-landscape{background-image:url('/assets/neon/iquique-interior.png')}
+.reference-hero.look-dark .scene-aura{background:radial-gradient(ellipse at 38% 43%,#171b6a50,transparent 50%)}
+.reference-hero.look-dark .scene-copy{color:white}
+.reference-hero.look-dark .large-mark{color:white;filter:drop-shadow(0 0 14px #6488ed)}
+.reference-hero.look-dark .mark-number{filter:brightness(0) invert(1)}
+.reference-hero.look-dark .hero-city,.reference-hero.look-dark .campaign-line,.reference-hero.look-dark .vertical-values{color:white;text-shadow:0 0 10px #3054c7;filter:none}
+@media(min-width:601px){.reference-hero.look-left .scene-muse{right:auto;left:0;transform:scaleX(-1)}.reference-hero.look-left .scene-copy{left:auto;right:14%}.reference-hero.look-left .vertical-values{left:auto;right:-115px}.reference-hero.look-left .scene-aura{background:radial-gradient(ellipse at 65% 43%,#f5f8ffb0,transparent 45%)}.reference-hero.look-left.look-dark .scene-aura{background:radial-gradient(ellipse at 65% 43%,#171b6a50,transparent 50%)}}

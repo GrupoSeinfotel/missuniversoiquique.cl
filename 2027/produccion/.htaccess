@@ -1,0 +1,27 @@
+
+<FilesMatch \.php$>
+        SetHandler proxy:fcgi://andrekis-php81
+</FilesMatch>
+
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^casting(?:/index\.(?:php|html))?/?$ /#casting [R=302,L,NE]
+RewriteRule ^sponsors(?:/index\.(?:php|html))?/?$ /#sponsors [R=302,L,NE]
+RewriteRule ^sponsor(?:/index\.(?:php|html))?/?$ /#sponsor-contacto [R=302,L,NE]
+RewriteRule ^sobre-nosotros(?:/index\.(?:php|html))?/?$ /#certamen [R=302,L,NE]
+RewriteRule ^descubre-iquique(?:/index\.(?:php|html))?/?$ /#iquique [R=302,L,NE]
+RewriteRule ^beneficios(?:/index\.(?:php|html))?/?$ /#camino [R=302,L,NE]
+RewriteRule ^datospresentacion(?:/index\.(?:php|html))?/?$ /#panel [R=302,L,NE]
+RewriteRule ^candidata/jacqueline\-lorena\-corona\-herrera\-3ph/?$ /#legado-perfil/cml5es6zc000jge7cuvl3m2g7 [R=302,L,NE]
+RewriteRule ^candidata/quri\-mayiri\-garca\-ayca\-pok/?$ /#legado-perfil/cml66yj17000vge7c2ck2ewsk [R=302,L,NE]
+RewriteRule ^candidata/ayalent\-nazareth\-alvarez\-bautista\-\-yfj/?$ /#legado-perfil/cml7fh4kr0011ge7cwto5eiy3 [R=302,L,NE]
+RewriteRule ^candidata/javiera\-antonia\-garca\-colipi\-\-2no/?$ /#legado-perfil/cmljrb49t0003gem40xu4v2r8 [R=302,L,NE]
+RewriteRule ^candidata/grace\-barbara\-valdovino\-averanga\-\-lcj/?$ /#legado-perfil/cmljylsgt0009gem4abqv4slv [R=302,L,NE]
+RewriteRule ^candidata/yessenia\-rojas\-figueroa\-\-maw/?$ /#legado-perfil/cmlx3o0f700cegerwqtdkg9tl [R=302,L,NE]
+RewriteRule ^candidata/valentina\-andrea\-medel\-ossandn\-\-8bh/?$ /#legado-perfil/cmmo9sevw003zgezwmohjlcxc [R=302,L,NE]
+RewriteRule ^candidata/bianca\-javiera\-ahuile\-franchini\-fkq/?$ /#legado-perfil/cmmsfgaek0061gejkx2ukwj31 [R=302,L,NE]
+RewriteRule ^candidata/carla\-vial\-muos\-vla/?$ /#legado-perfil/cmmvdye7m003xgelc9bc5nq7h [R=302,L,NE]
+RewriteRule ^candidata/poleth\-valentina\-len\-tapia\-k8m/?$ /#legado-perfil/cmn4v2vvf008ngeck7jwky06t [R=302,L,NE]
+RewriteRule ^candidata/yessamin\-natalia\-peredo\-celedn\-\-rxf/?$ /#legado-perfil/cmn6s8g8k0290geckwjja8e0f [R=302,L,NE]
+</IfModule>

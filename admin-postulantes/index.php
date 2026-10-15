@@ -521,6 +521,7 @@ $totalPendientes = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE esta
             <span>Miss Universe • Gestión de Postulantes 2027</span>
         </div>
         <div class="header-actions">
+            <a href="slider.php" class="btn-export" style="background:rgba(212,175,55,0.15); border-color:#d4af37; color:#ffd166;">🖼️ Gestión Hero Slider</a>
             <a href="?export=1" class="btn-export">📥 Exportar a Excel (CSV)</a>
             <span style="color:#666">|</span>
             <span style="font-size: 0.85rem; color:#bbb"><?= htmlspecialchars($_SESSION['admin_name']) ?></span>

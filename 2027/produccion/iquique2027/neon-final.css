@@ -1,0 +1,11 @@
+/* Composición de retrato y detalles de revisión. */
+[hidden]{display:none!important}
+.scene-muse{height:180%;max-width:none;width:auto;bottom:-82%;right:-5%}
+.mark-symbol .mark-number{left:0;top:0}
+.design-preview-notice{text-align:center;padding:12px 20px;background:linear-gradient(90deg,#102b69,#461868,#102b69);border-bottom:1px solid #d493ff;color:#e0e8ff;font-size:9px;letter-spacing:1.5px}
+.design-profile-link{text-align:center;margin-top:25px}
+.profile-portrait[src*="iquique-muse"]{object-fit:cover;object-position:center 5%;background:radial-gradient(ellipse at center,#254a9e66,#04143a)}
+@media(max-width:950px) and (min-width:601px){.scene-muse{height:170%;bottom:-73%;right:-24%}}
+@media(max-width:600px){.scene-muse{height:1000px;width:auto;max-width:none;right:-49%;top:-15px;bottom:auto}.design-preview-notice{font-size:7px;line-height:1.8}.scene-copy{top:310px}.scene-copy:before{content:'';position:absolute;inset:-45px -35px -30px;z-index:-1;background:radial-gradient(ellipse,#f0f7fff5 15%,#e6f2ffc9 45%,#e6f2ff40 64%,transparent 73%);pointer-events:none}}
+
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

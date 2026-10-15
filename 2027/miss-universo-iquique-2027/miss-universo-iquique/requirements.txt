@@ -1,0 +1,2 @@
+# Windows necesita tzdata para America/Santiago; Linux suele incluir la base del sistema.
+tzdata>=2025.2
