@@ -1,0 +1,32 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# Next.js & Build
+/.next/
+/out/
+/build
+
+# Heavy Media & Uploads (preservados en hosting)
+/public/uploads/
+/public/watermarked/
+
+# Prisma generated clients and binaries
+/prisma/generated/
+/src/generated/
+
+# Environment and sensitive
+.env*
+*.pem
+
+# Legacy and scratch
+_scripts_legacy/
+_skip_export/
+scratch/
+
+# OS and logs
+.DS_Store
+*.log
+*.tsbuildinfo
+next-env.d.ts

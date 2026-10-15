@@ -1,0 +1,221 @@
+/* Candidates Ranking Styles */
+.ranking-page {
+    background: var(--primary-bg, #000);
+    min-height: 100vh;
+    color: white;
+    font-family: var(--font-main, sans-serif);
+}
+
+.ranking-hero {
+    text-align: center;
+    padding: 80px 20px;
+    background: radial-gradient(circle at center, #1b1b1b 0%, #000 70%);
+}
+
+.ranking-title {
+    font-size: 3rem;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    background: linear-gradient(to right, #dfc06d, #fff7ad, #dfc06d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 10px;
+    font-weight: 800;
+}
+
+.ranking-subtitle {
+    font-size: 1.2rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.ranking-container {
+    max-width: 900px;
+    margin: -50px auto 50px;
+    padding: 0 20px;
+    position: relative;
+    z-index: 2;
+}
+
+.podium {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 20px;
+    margin-bottom: 60px;
+}
+
+.candidate-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+    transition: all 0.3s ease;
+}
+
+.candidate-card:hover {
+    transform: translateY(-10px);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(223, 192, 109, 0.3);
+}
+
+.pos-1 {
+    order: 2;
+    width: 320px;
+    padding: 50px 30px;
+    border-color: #ffd700;
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.05) 0%, rgba(0, 0, 0, 0.9) 100%);
+}
+
+.pos-2 {
+    order: 1;
+    width: 260px;
+    border-color: #c0c0c0;
+}
+
+.pos-3 {
+    order: 3;
+    width: 260px;
+    border-color: #cd7f32;
+}
+
+.crown-badge {
+    position: absolute;
+    top: -25px;
+    font-size: 45px;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+.pos-1 .crown-badge {
+    color: #ffd700;
+    font-size: 60px;
+    top: -35px;
+}
+
+.pos-2 .crown-badge {
+    color: #c0c0c0;
+}
+
+.pos-3 .crown-badge {
+    color: #cd7f32;
+}
+
+.candidate-img-wrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    background: #1a1a1a;
+}
+
+.pos-1 .candidate-img-wrapper {
+    width: 150px;
+    height: 150px;
+    border-color: #ffd700;
+}
+
+.candidate-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.candidate-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.candidate-votes {
+    color: var(--accent-pink, #dfc06d);
+    font-weight: 900;
+    font-size: 1.6rem;
+}
+
+.ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.ranking-row {
+    display: flex;
+    align-items: center;
+    background: rgba(15, 15, 15, 0.8);
+    padding: 15px 30px;
+    border-radius: 15px;
+    border: 1px solid #1a1a1a;
+    transition: all 0.2s;
+}
+
+.ranking-row:hover {
+    background: rgba(30, 30, 30, 0.9);
+    border-color: #333;
+}
+
+.rank-num {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #333;
+    width: 60px;
+}
+
+.row-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 20px;
+    border: 1px solid #444;
+}
+
+.row-name {
+    flex: 1;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+}
+
+.row-votes {
+    font-weight: 900;
+    color: #dfc06d;
+    font-size: 1.4rem;
+}
+
+@media (max-width: 850px) {
+    .podium {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .pos-1,
+    .pos-2,
+    .pos-3 {
+        order: unset;
+        width: 100%;
+    }
+
+    .pos-1 {
+        order: 1;
+    }
+
+    .pos-2 {
+        order: 2;
+    }
+
+    .pos-3 {
+        order: 3;
+    }
+}

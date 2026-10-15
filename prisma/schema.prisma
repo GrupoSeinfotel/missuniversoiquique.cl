@@ -1,0 +1,470 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client_v4"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPERADMIN
+  DIRECTOR
+  CANDIDATE
+  SPONSOR_PYME
+  VOTER
+  @@map("user_role")
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+  @@map("candidate_status")
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  @@map("payment_status")
+}
+
+enum PhotoType {
+  FACE
+  PROFILE
+  FULL_BODY
+  EDITORIAL
+  @@map("candidatephoto_type")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  username       String?   @unique
+  slug           String?   @unique
+  hashedPassword String
+  role           Role      @default(VOTER)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastLoginAt    DateTime?
+
+  candidate      Candidate?
+  sessions       Session[]
+  sentMessages   Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  announcements  Announcement[]
+  feedPosts      FeedPost[]
+  votes          Vote[]
+  vettings       CandidateVetting[]
+  groupMessages  GroupMessage[]
+  @@map("user")
+}
+
+model CandidateVetting {
+  id          String   @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  adminId     String
+  admin       User      @relation(fields: [adminId], references: [id])
+  approved    Boolean
+  createdAt   DateTime @default(now())
+
+  @@unique([candidateId, adminId])
+  @@map("candidatevetting")
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("session")
+}
+
+model Candidate {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  
+  fullName         String
+  birthDate        DateTime
+  height           Float
+  bio              String?  @db.Text
+  videoPitchUrl    String?
+  instagram        String?
+  whatsapp         String?
+  tiktok           String?
+  facebook         String?
+  
+  // Profile details
+  eyeColor         String?
+  hairColor        String?
+  education        String?
+  occupation       String?
+  hobbies          String?
+  age              Int?
+  futureAspirations String? @db.Text
+
+  // Medidas y tallas
+  bust             Float?
+  waist            Float?
+  hips             Float?
+  shoeSize         Float?
+  clothesSize      String?
+  
+  points           Int      @default(0)
+  taskPoints       Int      @default(0)
+  status           Status   @default(PENDING)
+  paymentStatus    PaymentStatus @default(UNPAID)
+  paidAmount       Float    @default(0)
+  paymentProofUrl  String?
+  installments     Int      @default(1)
+  basesSigned      Boolean  @default(false)
+  bypassPayment    Boolean  @default(false)
+  
+  // Growth fields for intelligent data management
+  growthBaseVotes  Int      @default(0)
+  growthRate       Float    @default(0) 
+  growthStartDate  DateTime @default(now())
+  importedVotes    Int      @default(0)
+  
+  brandAmbassadorAccepted   Boolean   @default(false)
+  brandAmbassadorAcceptedAt DateTime?
+  
+  referralProgramAccepted   Boolean   @default(false)
+  referralProgramAcceptedAt DateTime?
+  
+  referredById     String?
+  referredBy       Candidate? @relation("CandidateReferrals", fields: [referredById], references: [id])
+  referrals        Candidate[] @relation("CandidateReferrals")
+  
+  // Telemetry properties
+  lastActiveAt     DateTime?
+  totalLogins      Int       @default(0)
+  timeSpent        Int       @default(0)
+
+  photos           CandidatePhoto[]
+  sponsors         SponsorPyme[]
+  tickets          Ticket[]
+  votes            Vote[]
+  vettings         CandidateVetting[]
+  missionSubmissions MissionSubmission[]
+  rewards          Reward[]
+  rankingSnapshots RankingSnapshot[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  certificates    Certificate[]
+
+  @@map("candidate")
+}
+
+model Certificate {
+  id              String    @id @default(cuid())
+  code            String    @unique // e.g., MIQ-2026-017
+  fullName        String
+  idNumber        String?   // Rut
+  address         String?
+  phone           String?
+  title           String?   // e.g., Miss Universo Iquique 2026
+  description     String?   @db.Text
+  issuedAt        DateTime  @default(now())
+  imageUrl        String?   // Path to the certificate image
+  
+  candidateId     String?
+  candidate       Candidate? @relation(fields: [candidateId], references: [id])
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("certificate")
+}
+
+
+model CandidatePhoto {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  url         String
+  type        PhotoType
+  isWatermarked Boolean @default(false)
+  isMain        Boolean @default(false)
+  createdAt   DateTime  @default(now())
+  
+  @@map("candidatephoto")
+}
+
+model SponsorPyme {
+  id            String    @id @default(cuid())
+  candidateId   String
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  
+  businessName  String
+  rut           String?
+  logoUrl       String?
+  transferProof String?
+  amountSponsor Float     @default(0)
+  status        Status    @default(PENDING)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@map("sponsorpyme")
+}
+
+model PaymentTransaction {
+  id            String   @id @default(cuid())
+  commerceOrder String   @unique
+  flowOrder     String?
+  token         String?
+  status        String   @default("PENDING") // PENDING, PAID, REJECTED, ANNULLED
+  amount        Int
+  email         String
+  candidateId   String
+  votesCount    Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("payment_transaction")
+}
+
+model Vote {
+  id          String    @id @default(cuid())
+  voterId     String?
+  voter       User?     @relation(fields: [voterId], references: [id])
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  
+  type              String    @default("FREE")
+  amount            Float     @default(0)
+  ipAddress         String?
+  deviceFingerprint String?   @db.VarChar(1000)
+  guestEmail        String?
+  
+  createdAt   DateTime  @default(now())
+  
+  @@map("vote")
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String   @db.Text
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  
+  @@map("message")
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@map("announcement")
+}
+
+model SystemSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+  
+  @@map("systemsetting")
+}
+
+model Asset {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  type        String   
+  ownerRole   Role     
+  createdAt   DateTime @default(now())
+  
+  @@map("asset")
+}
+
+model FeedPost {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  imageUrl  String?  
+  mediaJson String?  @db.Text
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  
+  legacyLikes      Int      @default(0)
+  legacyShares     Int      @default(0)
+  
+  // Growth fields for intelligent engagement management
+  growthBaseLikes  Int      @default(0)
+  growthLikesRate  Float    @default(0)
+  growthBaseShares Int      @default(0)
+  growthSharesRate Float    @default(0)
+  growthStartDate  DateTime @default(now())
+  
+  createdAt DateTime @default(now())
+  
+  @@map("feedpost")
+}
+
+model GroupMessage {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  groupName String   @default("DIRECTORS")
+  createdAt DateTime @default(now())
+
+  @@map("groupmessage")
+}
+
+model HeroSlide {
+  id         String   @id 
+  name       String
+  configJson String   @db.LongText
+  updatedAt  DateTime @updatedAt
+  
+  @@map("heroslide")
+}
+
+model Mission {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  points      Int
+  platform    String   
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  submissions MissionSubmission[]
+  
+  @@map("mission")
+}
+
+model MissionSubmission {
+  id            String    @id @default(cuid())
+  missionId     String
+  mission       Mission   @relation(fields: [missionId], references: [id])
+  candidateId   String
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  proofUrl      String?   
+  proofLink     String?   
+  taskLabel     String?   
+  comment       String?   @db.Text
+  status        Status    @default(PENDING)
+  pointsAwarded Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@map("missionsubmission")
+}
+
+model SystemBroadcast {
+  id        String   @id @default(cuid())
+  type      String   
+  message   String   @db.Text
+  imageUrl  String?  @db.Text
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  
+  @@map("system_broadcast")
+}
+
+model Reward {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  points      Int
+  message     String    @db.Text
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@map("reward")
+}
+
+model BannedIp {
+  id        String   @id @default(cuid())
+  ip        String   @unique
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@map("banned_ip")
+}
+
+model RankingSnapshot {
+  id              String   @id @default(cuid())
+  candidateId     String
+  candidate       Candidate @relation(fields: [candidateId], references: [id])
+  totalVotes      Float
+  taskPoints      Int
+  importedVotes   Int
+  growthVotes     Int
+  totalCalculated Float
+  createdAt       DateTime @default(now())
+
+  @@map("ranking_snapshot")
+}
+
+model TicketPresale {
+  id        String   @id @default(cuid())
+  whatsapp  String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+
+  @@map("ticket_presale")
+}
+
+model TicketEventTransaction {
+  id            String   @id @default(cuid())
+  commerceOrder String   @unique
+  flowOrder     String?
+  token         String?
+  status        String   @default("PENDING") // PENDING, PAID, REJECTED, ANNULLED
+  amount        Int
+  email         String
+  quantity      Int
+  name          String?
+  ticketType    String   @default("VIP") // VIP, GENERAL
+  candidateId   String?  // The candidate being voted for via this purchase
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tickets       Ticket[]
+
+  @@map("ticket_event_transaction")
+}
+
+model Ticket {
+  id              String   @id @default(cuid())
+  code            String   @unique // The QR code value
+  name            String
+  email           String
+  type            String   @default("VIP")
+  status          String   @default("PAID") // PAID, PENDING, CANCELLED
+  isValidated     Boolean  @default(false)
+  validatedAt     DateTime?
+  isManual        Boolean  @default(false)      // Created by director
+  paymentMethod   String   @default("FLOW")    // FLOW, CASH, TRANSFER
+  
+  ticketNumber    Int?     @unique             // Sequential display ID (e.g. 001)
+  candidateId     String?                      // Optional candidate link
+  candidate       Candidate? @relation(fields: [candidateId], references: [id])
+
+  transactionId   String?
+  transaction     TicketEventTransaction? @relation(fields: [transactionId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("ticket")
+}
