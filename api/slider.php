@@ -52,7 +52,19 @@ try {
     exit;
 }
 
-// 2. Auto-poblar slides si está vacía
+// 2. Auto-poblar o migrar a fondos reales si tienen las modelos antiguas
+$stmtMig = $pdo->prepare("UPDATE slider_slides SET img_desktop = ?, img_mobile = ?, pos_desktop = 'center center', pos_mobile = 'center center' WHERE sede = 'arica' AND (img_desktop LIKE '%muse-v3%' OR img_desktop LIKE '%gala-v3%') AND order_num = 1");
+$stmtMig->execute(['/arica2027/assets/neon/arica-panorama.webp', '/arica2027/assets/neon/arica-panorama.webp']);
+
+$stmtMig2 = $pdo->prepare("UPDATE slider_slides SET img_desktop = ?, img_mobile = ?, pos_desktop = 'center center', pos_mobile = 'center center' WHERE sede = 'arica' AND (img_desktop LIKE '%muse-v3%' OR img_desktop LIKE '%gala-v3%') AND order_num = 2");
+$stmtMig2->execute(['/arica2027/assets/neon/coast-v3.webp', '/arica2027/assets/neon/coast-v3.webp']);
+
+$stmtMig3 = $pdo->prepare("UPDATE slider_slides SET img_desktop = ?, img_mobile = ?, pos_desktop = 'center center', pos_mobile = 'center center' WHERE sede = 'iquique' AND (img_desktop LIKE '%iquique-muse%' OR img_desktop LIKE '%iquique-gala%') AND order_num = 1");
+$stmtMig3->execute(['/iquique2027/assets/neon/iquique-night.webp', '/iquique2027/assets/neon/iquique-night.webp']);
+
+$stmtMig4 = $pdo->prepare("UPDATE slider_slides SET img_desktop = ?, img_mobile = ?, pos_desktop = 'center center', pos_mobile = 'center center' WHERE sede = 'iquique' AND (img_desktop LIKE '%iquique-muse%' OR img_desktop LIKE '%iquique-gala%') AND order_num = 2");
+$stmtMig4->execute(['/iquique2027/assets/neon/iquique-coast.webp', '/iquique2027/assets/neon/iquique-coast.webp']);
+
 $countTotal = (int)$pdo->query("SELECT COUNT(*) FROM slider_slides")->fetchColumn();
 if ($countTotal === 0) {
     // Slides para Arica
@@ -65,12 +77,12 @@ if ($countTotal === 0) {
         'UNA CIUDAD QUE INSPIRA · UN UNIVERSO DE TALENTOS',
         'EDICIÓN 2027',
         'El norte tiene su propia luz.',
-        '/arica2027/assets/neon/muse-v3.webp',
-        '/arica2027/assets/neon/muse-v3.webp',
-        '50% 20%',
-        '50% top',
-        '15%',
-        '85%',
+        '/arica2027/assets/neon/arica-panorama.webp',
+        '/arica2027/assets/neon/arica-panorama.webp',
+        'center center',
+        '55% center',
+        '10%',
+        '90%',
         'POSTULA AHORA',
         '#casting',
         1,
@@ -80,16 +92,16 @@ if ($countTotal === 0) {
     // Arica Slide 2
     $stmt->execute([
         'arica',
-        'PASARELA & ALTA COSTURA',
-        'BELLEZA, CULTURA Y TALENTO REGIONAL',
+        'COSTA & MAR DE ARICA',
+        'BELLEZA, CULTURA Y NATURALEZA REGIONAL',
         'CAMPAÑA OFICIAL',
         'La belleza de nuestra tierra en el escenario del mundo.',
-        '/arica2027/assets/neon/gala-v3.webp',
-        '/arica2027/assets/neon/gala-v3.webp',
-        '50% 15%',
-        '60% top',
-        '20%',
-        '80%',
+        '/arica2027/assets/neon/coast-v3.webp',
+        '/arica2027/assets/neon/coast-v3.webp',
+        'center center',
+        '50% center',
+        '15%',
+        '85%',
         'VIVE LA EXPERIENCIA',
         '#certamen',
         2,
@@ -103,12 +115,12 @@ if ($countTotal === 0) {
         'TALENTO QUE ILUMINA EL NORTE',
         'EDICIÓN 2027',
         'Donde los sueños tocan el mar.',
-        '/iquique2027/assets/neon/iquique-muse.webp',
-        '/iquique2027/assets/neon/iquique-muse.webp',
-        '50% 20%',
-        '50% top',
-        '15%',
-        '85%',
+        '/iquique2027/assets/neon/iquique-night.webp',
+        '/iquique2027/assets/neon/iquique-night.webp',
+        'center center',
+        '55% center',
+        '10%',
+        '90%',
         'POSTULA AHORA',
         '#casting',
         1,
@@ -118,16 +130,16 @@ if ($countTotal === 0) {
     // Iquique Slide 2
     $stmt->execute([
         'iquique',
-        'NOCHE DE CORONACIÓN & GALA',
+        'ATARDECER EN PLAYA BRAVA',
         'PROPÓSITO, ELEGANCIA Y TRASCENDENCIA',
         'ALFOMBRA ESTELAR',
         'El mar, la historia y la pasión de nuestra gente.',
-        '/iquique2027/assets/neon/iquique-gala.webp',
-        '/iquique2027/assets/neon/iquique-gala.webp',
-        '50% 15%',
-        '60% top',
-        '20%',
-        '80%',
+        '/iquique2027/assets/neon/iquique-coast.webp',
+        '/iquique2027/assets/neon/iquique-coast.webp',
+        'center center',
+        '50% center',
+        '15%',
+        '85%',
         'CONOCE EL EVENTO',
         '#certamen',
         2,

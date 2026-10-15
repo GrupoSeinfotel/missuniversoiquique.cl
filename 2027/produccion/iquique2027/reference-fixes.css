@@ -16,3 +16,14 @@
 .reference-hero.look-dark .mark-number{filter:brightness(0) invert(1)}
 .reference-hero.look-dark .hero-city,.reference-hero.look-dark .campaign-line,.reference-hero.look-dark .vertical-values{color:white;text-shadow:0 0 10px #3054c7;filter:none}
 @media(min-width:601px){.reference-hero.look-left .scene-muse{right:auto;left:0;transform:scaleX(-1)}.reference-hero.look-left .scene-copy{left:auto;right:14%}.reference-hero.look-left .vertical-values{left:auto;right:-115px}.reference-hero.look-left .scene-aura{background:radial-gradient(ellipse at 65% 43%,#f5f8ffb0,transparent 45%)}.reference-hero.look-left.look-dark .scene-aura{background:radial-gradient(ellipse at 65% 43%,#171b6a50,transparent 50%)}}
+
+/* Hero Background Slider System (Pasarela Teleton style) */
+.hero-media-wrap{position:absolute!important;inset:0!important;overflow:hidden!important;z-index:-5!important;pointer-events:none}
+.hero-photo{position:absolute!important;inset:-6% -10%!important;width:120%!important;height:112%!important;max-width:none!important;object-fit:cover!important;will-change:transform,opacity;opacity:0;transition:opacity 1.2s cubic-bezier(0.4,0,0.2,1)!important;transform:scale(1.08) translate3d(0,0,0);pointer-events:none}
+.hero-photo.is-active{opacity:1!important;z-index:2}
+.hero-photo.pan-right{animation:heroPanRight 6.5s cubic-bezier(0.25,0.9,0.35,1) forwards!important}
+.hero-photo.pan-left{animation:heroPanLeft 6.5s cubic-bezier(0.25,0.9,0.35,1) forwards!important}
+@keyframes heroPanRight{0%{transform:scale(1.08) translate3d(-3%,0,0)}100%{transform:scale(1.14) translate3d(3%,0,0)}}
+@keyframes heroPanLeft{0%{transform:scale(1.14) translate3d(3%,0,0)}100%{transform:scale(1.08) translate3d(-3%,0,0)}}
+@media (max-width:768px){.hero-photo{inset:-8% -20%!important;width:140%!important;height:116%!important}}
+

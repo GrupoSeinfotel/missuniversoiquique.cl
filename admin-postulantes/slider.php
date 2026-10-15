@@ -395,10 +395,10 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM slider_slides WHERE sede 
             <div>
                 <span style="font-size:11px; font-weight:800; color:var(--gold); letter-spacing:1px; text-transform:uppercase;">PORTADA PRINCIPAL & EXPERIENCIA HERO</span>
                 <h1 style="font-family:'Playfair Display',serif; font-size:26px; color:#fff; margin:4px 0 6px;">
-                    Hero Slider · Imágenes PC & Móvil (Arica & Iquique)
+                    Hero Slider · Fondos de Portada PC & Móvil (Arica & Iquique)
                 </h1>
                 <p style="font-size:12.5px; color:#a1a1aa; margin:0;">
-                    Configura las fotos de la portada principal. Puedes subir imágenes diferenciadas para pantallas anchas (PC) y para celulares (Móvil vertical), calibrando con recuadros el punto de inicio y fin del desplazamiento.
+                    Configura las fotos de <b>fondo</b> de la portada principal. Puedes subir imágenes de fondo diferenciadas para pantallas anchas (PC panorámica) y para celulares (Móvil vertical), calibrando con los recuadros verde y magenta el punto de inicio y fin del desplazamiento panorámico.
                 </p>
             </div>
 
@@ -629,18 +629,18 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM slider_slides WHERE sede 
                     <div style="margin-bottom:16px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                             <label style="font-size:11.5px; font-weight:800; color:#38bdf8; text-transform:uppercase;">
-                                🖥️ Imagen para PC (Desktop Panorámica 16:9) *
+                                🖥️ Imagen de Fondo para PC (Desktop Panorámica 16:9) *
                             </label>
                             <span style="font-size:10px; color:#94a3b8;">1920x1080 px recomendado</span>
                         </div>
                         <input type="file" name="img_desktop_file" id="fileDesktop" accept="image/*" onchange="previewSelectedImg(this, 'pc');" style="width:100%; background:#050208; border:1px solid rgba(56,189,248,0.4); padding:8px; border-radius:8px; color:#fff; font-size:12px;">
                         <div style="margin-top:6px; font-size:11px; color:#94a3b8;">
                             O ingresa ruta / URL existente:
-                            <input type="text" name="img_desktop_url" id="inpImgPcUrl" oninput="updateCanvasBg();" placeholder="/arica2027/assets/neon/muse-v3.webp" style="width:100%; height:34px; background:#050208; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; padding:0 10px; font-size:11.5px; margin-top:2px;">
+                            <input type="text" name="img_desktop_url" id="inpImgPcUrl" oninput="updateCanvasBg();" placeholder="/arica2027/assets/neon/arica-panorama.webp" style="width:100%; height:34px; background:#050208; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; padding:0 10px; font-size:11.5px; margin-top:2px;">
                         </div>
                         <div style="margin-top:6px;">
                             <label style="font-size:10px; color:#94a3b8;">Encuadre PC (CSS object-position):</label>
-                            <input type="text" name="pos_desktop" id="inpPosDesktop" value="50% 20%" placeholder="Ej: 50% 20%" style="width:100%; height:32px; background:#050208; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; padding:0 10px; font-size:11px;">
+                            <input type="text" name="pos_desktop" id="inpPosDesktop" value="center center" placeholder="Ej: center center" style="width:100%; height:32px; background:#050208; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; padding:0 10px; font-size:11px;">
                         </div>
                     </div>
 
@@ -648,18 +648,18 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM slider_slides WHERE sede 
                     <div>
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                             <label style="font-size:11.5px; font-weight:800; color:var(--gold); text-transform:uppercase;">
-                                📱 Imagen para Móvil / Celular (Vertical 9:16 o 4:5)
+                                📱 Imagen de Fondo para Móvil / Celular (Vertical 9:16 o 4:5)
                             </label>
                             <span style="font-size:10px; color:#94a3b8;">1080x1920 px (Opcional)</span>
                         </div>
                         <input type="file" name="img_mobile_file" id="fileMobile" accept="image/*" onchange="previewSelectedImg(this, 'mob');" style="width:100%; background:#050208; border:1px solid rgba(212,175,55,0.4); padding:8px; border-radius:8px; color:#fff; font-size:12px;">
                         <div style="margin-top:6px; font-size:11px; color:#94a3b8;">
                             O ingresa ruta / URL existente para móvil:
-                            <input type="text" name="img_mobile_url" id="inpImgMobUrl" oninput="updateCanvasBg();" placeholder="/arica2027/assets/neon/muse-v3.webp" style="width:100%; height:34px; background:#050208; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; padding:0 10px; font-size:11.5px; margin-top:2px;">
+                            <input type="text" name="img_mobile_url" id="inpImgMobUrl" oninput="updateCanvasBg();" placeholder="/arica2027/assets/neon/arica-panorama.webp" style="width:100%; height:34px; background:#050208; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; padding:0 10px; font-size:11.5px; margin-top:2px;">
                         </div>
                         <div style="margin-top:6px;">
                             <label style="font-size:10px; color:#94a3b8;">Encuadre Móvil Estático Fallback:</label>
-                            <input type="text" name="pos_mobile" id="inpPosMobile" value="50% top" placeholder="Ej: 50% top" style="width:100%; height:32px; background:#050208; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; padding:0 10px; font-size:11px;">
+                            <input type="text" name="pos_mobile" id="inpPosMobile" value="55% center" placeholder="Ej: 55% center" style="width:100%; height:32px; background:#050208; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; padding:0 10px; font-size:11px;">
                         </div>
                     </div>
                 </div>
@@ -671,10 +671,10 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM slider_slides WHERE sede 
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
                         <div>
                             <h4 style="font-family:'Playfair Display',serif; font-size:15px; color:var(--gold); margin:0; display:flex; align-items:center; gap:8px;">
-                                <span>🎬</span> Calibrador de Recuadros (Inicio & Fin)
+                                <span>🎬</span> Calibrador de Recuadros del Fondo (Inicio & Fin)
                             </h4>
                             <p style="font-size:11px; color:#e2e8f0; margin:4px 0 0; max-width:440px; line-height:1.4;">
-                                Arrastra los recuadros con el mouse o mueve los deslizadores para fijar <b>dónde inicia (Punto 1)</b> y <b>dónde termina (Punto 2)</b> el encuadre en el celular.
+                                Arrastra los recuadros con el mouse o mueve los deslizadores para fijar <b>dónde inicia (Punto 1)</b> y <b>dónde termina (Punto 2)</b> el encuadre panorámico en el celular.
                             </p>
                         </div>
                         <button type="button" onclick="playPanSimulation();" style="background:linear-gradient(135deg, #f5245f, #9333ea); color:#fff; border:none; padding:8px 16px; font-size:11.5px; font-weight:800; border-radius:99px; box-shadow:0 0 15px rgba(245,36,95,0.4); cursor:pointer;">
@@ -685,7 +685,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM slider_slides WHERE sede 
                     <!-- CANVAS CON RECUADROS INTERACTIVOS -->
                     <div id="panCanvasContainer" style="position:relative; width:100%; height:190px; background:#040206; border-radius:12px; overflow:hidden; border:1px solid rgba(212,175,55,0.3); box-shadow:inset 0 0 25px rgba(0,0,0,0.9); user-select:none;">
                         <!-- Imagen de Fondo -->
-                        <img id="panPreviewImg" src="/arica2027/assets/neon/muse-v3.webp" alt="Preview" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.9; pointer-events:none;">
+                        <img id="panPreviewImg" src="/arica2027/assets/neon/arica-panorama.webp" alt="Preview" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.9; pointer-events:none;">
                         
                         <!-- Sombra guía -->
                         <div style="position:absolute; inset:0; background:rgba(0,0,0,0.3); pointer-events:none;"></div>

@@ -10,7 +10,7 @@ La versión de producción independiente está en `produccion/`. El diseño y lo
 
 ## Operación
 
-Entrar con la cuenta administrativa PHP existente del alojamiento. No se publica aquí ninguna contraseña. En Administración se revisan solicitudes y sus fotografías privadas, se actualizan sus estados, y se gestionan fichas, noticias, patrocinadores, agenda y configuración. Las candidatas deben crear su cuenta 2027 antes de asociarles una ficha.
+El único superadministrador de Iquique 2027 es seinfotel.com@gmail.com. Su acceso se entregó en un archivo privado del equipo. La base impide crear un segundo superadministrador y el servidor reserva ese rol para dicho correo. Las cuentas administrativas PHP existentes conservan el rol de administrador. No se publica aquí ninguna contraseña. En Administración se revisan solicitudes y sus fotografías privadas, se actualizan sus estados, y se gestionan fichas, noticias, patrocinadores, agenda y configuración. Las candidatas deben crear su cuenta 2027 antes de asociarles una ficha.
 
 Para subir noticias de la reina, seleccionar edición 2026 en el editor. Para noticias de la nueva convocatoria, seleccionar 2027. El archivo importado es de consulta y sus datos originales no se editan desde este panel.
 
