@@ -42,13 +42,13 @@ if ($action === 'get_linktree') {
         exit;
     }
 
-    $stmt = $pdo->prepare("SELECT id, sede, username, full_name, title_badge, photo_main, occupation, inst_email, custom_links, mode_editorial, mode_linktree, is_minimal_record, instagram, tiktok, whatsapp FROM legado_2026 WHERE sede = ? AND username = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, sede, username, full_name, title_badge, photo_main, photos_gallery, videos_gallery, occupation, inst_email, custom_links, mode_editorial, mode_linktree, is_minimal_record, instagram, tiktok, whatsapp FROM legado_2026 WHERE sede = ? AND username = ? LIMIT 1");
     $stmt->execute([$sede, $user]);
     $candidate = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$candidate) {
         // Intento de fallback sin filtrar sede en caso de link cruzado
-        $stmt2 = $pdo->prepare("SELECT id, sede, username, full_name, title_badge, photo_main, occupation, inst_email, custom_links, mode_editorial, mode_linktree, is_minimal_record, instagram, tiktok, whatsapp FROM legado_2026 WHERE username = ? LIMIT 1");
+        $stmt2 = $pdo->prepare("SELECT id, sede, username, full_name, title_badge, photo_main, photos_gallery, videos_gallery, occupation, inst_email, custom_links, mode_editorial, mode_linktree, is_minimal_record, instagram, tiktok, whatsapp FROM legado_2026 WHERE username = ? LIMIT 1");
         $stmt2->execute([$user]);
         $candidate = $stmt2->fetch(PDO::FETCH_ASSOC);
     }
@@ -180,6 +180,20 @@ if ($action === 'save_profile') {
     $modeLinktree = isset($_POST['mode_linktree']) ? intval($_POST['mode_linktree']) : 1;
     $isMinimalRecord = isset($_POST['is_minimal_record']) ? intval($_POST['is_minimal_record']) : 0;
 
+    // Videos de pasarela (JSON)
+    $videosGallery = $cand['videos_gallery'];
+    if (isset($_POST['videos_gallery'])) {
+        $rawVideos = $_POST['videos_gallery'];
+        if (is_array($rawVideos)) {
+            $videosGallery = json_encode($rawVideos, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        } else {
+            json_decode($rawVideos);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $videosGallery = $rawVideos;
+            }
+        }
+    }
+
     // Actualizar en base de datos
     $updateStmt = $pdo->prepare("
         UPDATE legado_2026 SET
@@ -192,6 +206,7 @@ if ($action === 'save_profile') {
             tiktok = ?,
             whatsapp = ?,
             custom_links = ?,
+            videos_gallery = ?,
             mode_editorial = ?,
             mode_linktree = ?,
             is_minimal_record = ?,
@@ -209,6 +224,7 @@ if ($action === 'save_profile') {
         $tiktok,
         $whatsapp,
         $customLinks,
+        $videosGallery,
         $modeEditorial,
         $modeLinktree,
         $isMinimalRecord,

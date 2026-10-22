@@ -1,10 +1,10 @@
 <?php
 /**
  * MISS UNIVERSO · SALÓN OFICIAL DEL LEGADO 2026
- * Experiencia Visual de Alta Costura, Identidad Digital y Bio-Links Oficiales
+ * Experiencia Visual de Alta Costura, Pasarela y Bio-Links Oficiales
  * Vistas:
- * 1. Salón General (/2026/) con filtro Arica / Iquique y buscador interactivo.
- * 2. Perfil Editorial de Alta Costura (/2026/usuario).
+ * 1. Salón General (/2026/) con filtro Arica / Iquique, Spotlight de Pasarela y Buscador en Vivo.
+ * 2. Perfil Editorial de Alta Costura (/2026/usuario) con Teatro de Video de Pasarela y Portafolio.
  * 3. VIP Bio-Link Linktree (/2026/#usuario o ?view=linktree).
  */
 require_once __DIR__ . '/../config/db.php';
@@ -16,9 +16,9 @@ if (isset($_GET['sede']) && in_array(strtolower($_GET['sede']), ['arica', 'iquiq
     $sede = strtolower($_GET['sede']);
 }
 
-$sedeTitle = $sede === 'arica' ? 'Arica' : 'Iquique';
-$sedeColor = $sede === 'arica' ? '#f5245f' : '#b930d5';
-$sedeAccent = $sede === 'arica' ? '#e2a93b' : '#38bdf8';
+$sedeTitle = ($sede === 'arica') ? 'Arica' : 'Iquique';
+$sedeColor = ($sede === 'arica') ? '#f5245f' : '#b930d5';
+$sedeAccent = ($sede === 'arica') ? '#e2a93b' : '#38bdf8';
 $instDomain = "2026.missuniverso{$sede}.cl";
 $baseUrl = "https://missuniverso{$sede}.cl";
 
@@ -47,24 +47,38 @@ if (!empty($requestedUser)) {
 $viewMode = $_GET['view'] ?? '';
 $isLinktreeView = ($viewMode === 'linktree') || (!empty($candidate) && !$candidate['mode_editorial'] && $candidate['mode_linktree']);
 
-// Obtener todas las candidatas de la sede y conteos
-$stmtAll = $pdo->prepare("SELECT id, sede, username, full_name, title_badge, photo_main, photos_gallery, occupation, bio, inst_email, custom_links, mode_editorial, mode_linktree, is_minimal_record FROM legado_2026 WHERE sede = ? ORDER BY id ASC");
-$stmtAll->execute([$sede]);
+// Obtener todas las candidatas para el salón interactivo
+$stmtAll = $pdo->query("SELECT id, sede, username, full_name, title_badge, photo_main, photos_gallery, videos_gallery, occupation, bio, inst_email, custom_links, mode_editorial, mode_linktree, is_minimal_record FROM legado_2026 ORDER BY sede DESC, id ASC");
 $allCandidates = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
 
-// Conteos
-$countArica = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 'arica'")->fetchColumn();
-$countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 'iquique'")->fetchColumn();
+// Conteos y Candidatas con Video
+$countTotal = count($allCandidates);
+$countArica = 0;
+$countIquique = 0;
+$candidatesWithVideos = [];
+
+foreach ($allCandidates as $candItem) {
+    if ($candItem['sede'] === 'arica') $countArica++;
+    if ($candItem['sede'] === 'iquique') $countIquique++;
+    $vids = [];
+    if (!empty($candItem['videos_gallery'])) {
+        $vids = json_decode($candItem['videos_gallery'], true) ?: [];
+    }
+    if (!empty($vids)) {
+        $candidatesWithVideos[] = $candItem;
+    }
+}
+$countWithVideos = count($candidatesWithVideos);
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title><?= $candidate ? htmlspecialchars($candidate['full_name']) . " · Salón del Legado 2026 · Miss Universo {$sedeTitle}" : "Salón del Legado 2026 · Miss Universo {$sedeTitle}" ?></title>
+    <title><?= $candidate ? htmlspecialchars($candidate['full_name']) . " · Salón del Legado 2026 · Miss Universo {$sedeTitle}" : "Salón del Legado 2026 · Miss Universo {$sedeTitle} & Arica" ?></title>
     
-    <meta name="description" content="<?= $candidate ? htmlspecialchars($candidate['bio'] ?? "Perfil oficial de {$candidate['full_name']}, Embajadora de Miss Universo {$sedeTitle} 2026.") : "Descubre a las mujeres que forjaron la historia en Miss Universo {$sedeTitle} 2026. Portafolios editoriales y Bio-Links oficiales." ?>">
-    <meta name="theme-color" content="#010820">
+    <meta name="description" content="<?= $candidate ? htmlspecialchars($candidate['bio'] ?? "Perfil oficial de {$candidate['full_name']}, Embajadora de Miss Universo {$sedeTitle} 2026.") : "Homenaje oficial a las embajadoras de Miss Universo 2026. Portafolios de alta costura, reels de pasarela y Bio-Links oficiales verificados." ?>">
+    <meta name="theme-color" content="#010619">
     
     <?php if ($candidate && !empty($candidate['photo_main'])): ?>
     <meta property="og:image" content="<?= htmlspecialchars($candidate['photo_main']) ?>">
@@ -78,13 +92,13 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
 
     <style>
         :root {
-            --bg-deep: #010820;
-            --bg-card: rgba(4, 16, 48, 0.78);
-            --border-glass: rgba(138, 180, 248, 0.22);
-            --border-gold: rgba(234, 179, 8, 0.55);
+            --bg-deep: #010619;
+            --bg-card: rgba(3, 14, 44, 0.82);
+            --border-glass: rgba(147, 197, 253, 0.18);
+            --border-gold: rgba(234, 179, 8, 0.5);
             --gold: #f7d070;
             --gold-glow: #eab308;
-            --gold-metallic: linear-gradient(135deg, #ffffff 0%, #f7d070 30%, #eab308 70%, #d4af37 100%);
+            --gold-metallic: linear-gradient(135deg, #ffffff 0%, #fce793 25%, #eab308 70%, #b48608 100%);
             --accent: <?= $sedeColor ?>;
             --accent-sub: <?= $sedeAccent ?>;
             --text-main: #f8fafc;
@@ -102,7 +116,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             position: relative;
         }
 
-        /* Lienzo Cósmico con Partículas y Resplandores */
+        /* Canvas de Polvo Estelar Dorado */
         #stardustCanvas {
             position: fixed;
             top: 0;
@@ -113,27 +127,28 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             z-index: 0;
         }
 
+        /* Resplandores Cósmicos de Fondo */
         .cosmic-aurora {
             position: fixed;
             inset: 0;
             pointer-events: none;
             z-index: 0;
             background: 
-                radial-gradient(circle at 15% 15%, rgba(245, 36, 95, 0.22) 0%, transparent 45%),
-                radial-gradient(circle at 85% 25%, rgba(185, 48, 213, 0.24) 0%, transparent 50%),
-                radial-gradient(circle at 50% 65%, rgba(234, 179, 8, 0.14) 0%, transparent 55%),
-                radial-gradient(circle at 50% 10%, #061e54 0%, #010820 70%);
+                radial-gradient(circle at 12% 18%, rgba(245, 36, 95, 0.2) 0%, transparent 48%),
+                radial-gradient(circle at 88% 22%, rgba(185, 48, 213, 0.22) 0%, transparent 52%),
+                radial-gradient(circle at 50% 60%, rgba(234, 179, 8, 0.12) 0%, transparent 55%),
+                radial-gradient(circle at 50% 5%, #051648 0%, #010619 75%);
             background-attachment: fixed;
         }
 
-        /* Glassmorphism Luxury */
+        /* Glassmorphism de Alta Costura */
         .glass {
             background: var(--bg-card);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border-glass);
-            border-radius: 20px;
-            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(255, 255, 255, 0.03);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.03);
             position: relative;
             z-index: 1;
         }
@@ -147,10 +162,11 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(1, 8, 32, 0.88);
-            backdrop-filter: blur(16px);
+            background: rgba(1, 6, 25, 0.9);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
             border-bottom: 1px solid rgba(234, 179, 8, 0.25);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
         }
         .brand-pill {
             display: flex;
@@ -160,8 +176,13 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             color: #fff;
         }
         .brand-crown {
-            font-size: 26px;
-            filter: drop-shadow(0 0 10px var(--gold-glow));
+            font-size: 28px;
+            filter: drop-shadow(0 0 12px var(--gold-glow));
+            animation: crownPulse 3s ease-in-out infinite;
+        }
+        @keyframes crownPulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px var(--gold-glow)); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 0 20px #ffd700); }
         }
         .brand-text {
             display: flex;
@@ -214,13 +235,15 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             box-shadow: 0 0 20px rgba(245, 36, 95, 0.5);
         }
 
-        /* Hero Banner del Salón */
+        /* ==============================================================
+           HERO MONUMENTAL DEL SALÓN
+           ============================================================== */
         .salon-hero {
             position: relative;
             z-index: 1;
             text-align: center;
-            padding: 65px 20px 40px;
-            max-width: 900px;
+            padding: 70px 20px 35px;
+            max-width: 1040px;
             margin: 0 auto;
         }
         .hero-eyebrow {
@@ -229,50 +252,231 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             gap: 8px;
             font-size: 12px;
             font-weight: 800;
-            letter-spacing: 3px;
+            letter-spacing: 3.5px;
             text-transform: uppercase;
             color: var(--gold);
-            padding: 6px 18px;
+            padding: 7px 20px;
             border-radius: 30px;
             background: rgba(234, 179, 8, 0.1);
             border: 1px solid var(--border-gold);
-            margin-bottom: 16px;
-            box-shadow: 0 0 20px rgba(234, 179, 8, 0.2);
+            margin-bottom: 18px;
+            box-shadow: 0 0 25px rgba(234, 179, 8, 0.25);
         }
         .hero-title {
             font-family: 'Cormorant Garamond', serif;
-            font-size: clamp(2.6rem, 7vw, 5rem);
+            font-size: clamp(2.8rem, 7.5vw, 5.5rem);
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             line-height: 1.05;
             margin-bottom: 6px;
             background: var(--gold-metallic);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 35px rgba(234, 179, 8, 0.35));
+            filter: drop-shadow(0 0 40px rgba(234, 179, 8, 0.4));
         }
         .hero-calligraphy {
             font-family: 'Italianno', cursive;
-            font-size: clamp(2.4rem, 5vw, 3.8rem);
+            font-size: clamp(2.6rem, 5.5vw, 4rem);
             color: var(--gold);
             line-height: 1;
-            margin-bottom: 18px;
-            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.8));
+            margin-bottom: 20px;
+            filter: drop-shadow(0 2px 10px rgba(0,0,0,0.9));
         }
         .hero-desc {
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             color: #cbd5e1;
-            max-width: 650px;
-            margin: 0 auto 28px;
+            max-width: 720px;
+            margin: 0 auto 30px;
             font-weight: 400;
+            line-height: 1.7;
         }
 
-        /* Selector de Sedes y Filtro Interactivo */
+        /* Barra de Métricas de Lujo */
+        .metrics-banner {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin: 0 auto 40px;
+            max-width: 900px;
+        }
+        .metric-pill {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .metric-pill:hover {
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(234, 179, 8, 0.2);
+        }
+        .metric-pill strong {
+            color: var(--gold);
+            font-weight: 900;
+        }
+
+        /* ==============================================================
+           SPOTLIGHT DE REELS DE PASARELA HD (CARRUSEL EXCLUSIVO)
+           ============================================================== */
+        .reels-spotlight-section {
+            position: relative;
+            z-index: 1;
+            max-width: 1340px;
+            margin: 0 auto 60px;
+            padding: 0 20px;
+        }
+        .reels-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .reels-title-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .reels-badge-live {
+            background: #ef4444;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+            animation: pulseLive 2s infinite;
+        }
+        @keyframes pulseLive {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.65; }
+        }
+        .reels-headline {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+        .reels-headline span { color: var(--gold); }
+
+        .reels-track {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 16px;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: thin;
+            scrollbar-color: var(--gold) rgba(255, 255, 255, 0.05);
+        }
+        .reels-track::-webkit-scrollbar {
+            height: 6px;
+        }
+        .reels-track::-webkit-scrollbar-thumb {
+            background: var(--gold);
+            border-radius: 4px;
+        }
+
+        .reel-item-card {
+            flex: 0 0 220px;
+            aspect-ratio: 9/16;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            border: 1.5px solid var(--border-gold);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+            scroll-snap-align: start;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            background: #020822;
+        }
+        .reel-item-card:hover {
+            transform: translateY(-8px) scale(1.03);
+            border-color: #ffd700;
+            box-shadow: 0 20px 45px rgba(234, 179, 8, 0.4);
+        }
+        .reel-card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .reel-item-card:hover .reel-card-img {
+            transform: scale(1.08);
+        }
+        .reel-scrim {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(1, 6, 25, 0.95) 0%, rgba(1, 6, 25, 0.4) 40%, rgba(0,0,0,0.1) 100%);
+        }
+        .reel-play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f5245f, #eab308);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 20px;
+            box-shadow: 0 0 25px rgba(245, 36, 95, 0.8);
+            transition: all 0.3s;
+        }
+        .reel-item-card:hover .reel-play-btn {
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 0 35px #ffd700;
+        }
+        .reel-meta {
+            position: absolute;
+            bottom: 14px;
+            left: 14px;
+            right: 14px;
+            z-index: 2;
+        }
+        .reel-sede-tag {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 2px;
+        }
+        .reel-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.15;
+        }
+
+        /* ==============================================================
+           CONTROLES: FILTROS MULTI-SEDE Y BUSCADOR
+           ============================================================== */
         .controls-bar {
             position: relative;
             z-index: 1;
-            max-width: 1280px;
+            max-width: 1340px;
             margin: 0 auto 35px;
             padding: 0 20px;
             display: flex;
@@ -281,31 +485,38 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             align-items: center;
             gap: 16px;
         }
-        .sede-switcher {
+        .filter-pills-wrap {
             display: flex;
-            gap: 10px;
-            background: rgba(255, 255, 255, 0.04);
+            flex-wrap: wrap;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
             padding: 6px;
             border-radius: 50px;
             border: 1px solid var(--border-glass);
         }
-        .sede-btn {
-            padding: 8px 22px;
+        .filter-pill-btn {
+            padding: 9px 20px;
             border-radius: 40px;
             font-size: 12px;
             font-weight: 800;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             text-transform: uppercase;
             text-decoration: none;
             color: #94a3b8;
-            transition: all 0.3s ease;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-        .sede-btn.active {
+        .filter-pill-btn.active {
             background: linear-gradient(135deg, #f5245f, #eab308);
             color: #fff;
             box-shadow: 0 0 20px rgba(245, 36, 95, 0.5);
         }
-        .sede-btn:hover:not(.active) {
+        .filter-pill-btn:hover:not(.active) {
             color: #fff;
             background: rgba(255, 255, 255, 0.08);
         }
@@ -313,14 +524,15 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         .search-box {
             position: relative;
             flex: 1;
-            max-width: 380px;
+            max-width: 360px;
+            min-width: 240px;
         }
         .search-input {
             width: 100%;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-glass);
             border-radius: 50px;
-            padding: 11px 20px 11px 44px;
+            padding: 12px 20px 12px 44px;
             color: #fff;
             font-size: 0.9rem;
             outline: none;
@@ -341,29 +553,47 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             pointer-events: none;
         }
 
-        /* GRID DE CANDIDATAS (ALTA COSTURA - ASPECT RATIO 3:4) */
+        /* Contador de Resultados */
+        .results-count-bar {
+            max-width: 1340px;
+            margin: 0 auto 20px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .results-count-bar b {
+            color: var(--gold);
+        }
+
+        /* ==============================================================
+           GRID DE ALTA COSTURA: COMP-CARDS 3:4.5
+           ============================================================== */
         .salon-grid-container {
             position: relative;
             z-index: 1;
-            max-width: 1320px;
-            margin: 0 auto 80px;
+            max-width: 1340px;
+            margin: 0 auto 90px;
             padding: 0 20px;
         }
         .candidates-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 28px;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 32px;
         }
 
         /* Tarjeta de Alta Costura */
         .candidate-card {
             position: relative;
-            aspect-ratio: 3/4.2;
-            border-radius: 22px;
+            aspect-ratio: 3/4.4;
+            border-radius: 24px;
             overflow: hidden;
             border: 1.5px solid var(--border-gold);
-            background: #020822;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), inset 0 0 25px rgba(255, 255, 255, 0.03);
+            background: #02071f;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.85), inset 0 0 25px rgba(255, 255, 255, 0.03);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             flex-direction: column;
@@ -373,7 +603,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         .candidate-card:hover {
             transform: translateY(-10px) scale(1.02);
             border-color: #ffd700;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(234, 179, 8, 0.4);
+            box-shadow: 0 30px 65px rgba(0, 0, 0, 0.95), 0 0 40px rgba(234, 179, 8, 0.45);
         }
 
         .card-bg-photo {
@@ -385,20 +615,19 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
         }
         .candidate-card:hover .card-bg-photo {
-            transform: scale(1.08);
-            filter: brightness(1.06) contrast(1.05);
+            transform: scale(1.07);
+            filter: brightness(1.08) contrast(1.06);
         }
 
-        /* Velo de Iluminación Gradiente */
         .card-scrim {
             position: absolute;
             inset: 0;
             background: linear-gradient(
                 to top,
-                rgba(1, 8, 32, 0.96) 0%,
-                rgba(1, 8, 32, 0.72) 32%,
-                rgba(1, 8, 32, 0.2) 60%,
-                rgba(1, 8, 32, 0.4) 100%
+                rgba(1, 6, 25, 0.98) 0%,
+                rgba(1, 6, 25, 0.78) 32%,
+                rgba(1, 6, 25, 0.22) 60%,
+                rgba(1, 6, 25, 0.4) 100%
             );
             pointer-events: none;
         }
@@ -406,35 +635,42 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         /* Badges Superiores Flotantes */
         .card-top-bar {
             position: absolute;
-            top: 14px;
-            left: 14px;
-            right: 14px;
+            top: 16px;
+            left: 16px;
+            right: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 2;
         }
         .chip-number {
-            background: rgba(1, 8, 32, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(1, 6, 25, 0.85);
+            backdrop-filter: blur(12px);
             border: 1px solid var(--border-gold);
             color: var(--gold);
             font-size: 11px;
             font-weight: 800;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 20px;
             letter-spacing: 1px;
         }
-        .chip-crown {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #eab308, #ca8a04);
+        .chip-reel-badge {
+            background: linear-gradient(135deg, #f5245f, #eab308);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 5px 11px;
+            border-radius: 20px;
+            letter-spacing: 1px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            gap: 4px;
+            box-shadow: 0 0 15px rgba(245, 36, 95, 0.7);
+            animation: reelBadgeGlow 2.5s infinite;
+        }
+        @keyframes reelBadgeGlow {
+            0%, 100% { box-shadow: 0 0 12px rgba(245, 36, 95, 0.7); }
+            50% { box-shadow: 0 0 22px #ffd700; }
         }
 
         /* Contenido Inferior de la Tarjeta */
@@ -448,63 +684,45 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         }
         .cand-card-tag {
             font-size: 11px;
-            font-weight: 800;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: var(--gold);
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         .cand-card-name {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 1.7rem;
+            font-size: 1.65rem;
             font-weight: 700;
-            color: #fff;
             line-height: 1.15;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+            color: #fff;
+            transition: color 0.3s ease;
+        }
+        .candidate-card:hover .cand-card-name {
+            color: #ffd700;
         }
         .cand-card-occ {
-            font-size: 0.82rem;
-            color: #cbd5e1;
-            font-weight: 400;
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            white-space: nowrap;
             overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 8px;
         }
 
-        /* Botones de Acción Rápida en la Tarjeta */
         .card-actions-bar {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
             gap: 8px;
-            margin-top: 10px;
+            margin-top: 4px;
         }
-        .btn-card-linktree {
-            background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(245, 36, 95, 0.25));
-            border: 1px solid var(--border-gold);
-            color: #fff;
-            padding: 9px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            backdrop-filter: blur(8px);
-        }
-        .btn-card-linktree:hover {
-            background: linear-gradient(135deg, #f5245f, #eab308);
-            border-color: #ffd700;
-            box-shadow: 0 0 20px rgba(234, 179, 8, 0.6);
-            transform: translateY(-2px);
-        }
-
-        .btn-card-editorial {
+        .btn-card-action {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid var(--border-glass);
             color: #fff;
-            padding: 9px 8px;
+            padding: 10px 8px;
             border-radius: 12px;
             font-size: 11px;
             font-weight: 800;
@@ -512,44 +730,89 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             letter-spacing: 0.5px;
             text-align: center;
             text-decoration: none;
+            cursor: pointer;
             transition: all 0.2s ease;
             backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
-        .btn-card-editorial:hover {
+        .btn-card-action:hover {
             background: rgba(255, 255, 255, 0.2);
             border-color: #fff;
             color: var(--gold);
             transform: translateY(-2px);
         }
+        .btn-card-action-video {
+            background: linear-gradient(135deg, rgba(245, 36, 95, 0.35), rgba(234, 179, 8, 0.35));
+            border-color: var(--border-gold);
+            color: #fff;
+        }
+        .btn-card-action-video:hover {
+            background: linear-gradient(135deg, #f5245f, #eab308);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(245, 36, 95, 0.6);
+        }
 
         /* ==============================================================
-           2. VISTA EDITORIAL DE ALTA COSTURA (/2026/usuario)
+           VISTA 1: PERFIL EDITORIAL DE ALTA COSTURA (/2026/usuario)
            ============================================================== */
         .editorial-wrapper {
             position: relative;
             z-index: 1;
-            max-width: 1200px;
+            max-width: 1240px;
             margin: 40px auto 100px;
             padding: 0 20px;
         }
+        .editorial-back-nav {
+            margin-bottom: 24px;
+        }
+        .btn-back-salon {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 8px 18px;
+            border-radius: 30px;
+            background: rgba(234, 179, 8, 0.1);
+            border: 1px solid var(--border-gold);
+            transition: all 0.25s;
+        }
+        .btn-back-salon:hover {
+            background: var(--gold);
+            color: #000;
+            transform: translateX(-4px);
+        }
+
         .editorial-hero-grid {
             display: grid;
             grid-template-columns: 1fr 1.35fr;
-            gap: 40px;
+            gap: 45px;
             margin-bottom: 50px;
             align-items: center;
+            padding: 40px;
         }
         @media (max-width: 860px) {
-            .editorial-hero-grid { grid-template-columns: 1fr; }
+            .editorial-hero-grid {
+                grid-template-columns: 1fr;
+                padding: 24px;
+                gap: 30px;
+            }
         }
 
         .portrait-frame-box {
             position: relative;
-            aspect-ratio: 3/4.2;
-            border-radius: 24px;
+            aspect-ratio: 3/4.4;
+            border-radius: 26px;
             overflow: hidden;
             border: 2px solid var(--border-gold);
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(234, 179, 8, 0.25);
+            box-shadow: 0 25px 65px rgba(0, 0, 0, 0.95), 0 0 45px rgba(234, 179, 8, 0.3);
         }
         .portrait-frame-box img {
             width: 100%;
@@ -607,7 +870,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         }
         .editorial-quote {
             position: relative;
-            padding: 20px 24px;
+            padding: 22px 26px;
             background: rgba(255, 255, 255, 0.03);
             border-left: 3px solid var(--gold);
             border-radius: 0 16px 16px 0;
@@ -617,7 +880,6 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             line-height: 1.7;
         }
 
-        /* Banner de Correo Institucional en Editorial */
         .inst-email-banner {
             background: rgba(234, 179, 8, 0.08);
             border: 1px solid var(--border-gold);
@@ -659,9 +921,9 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             color: #000;
         }
 
-        /* Galería Editorial */
-        .editorial-gallery-section {
-            margin-top: 50px;
+        /* Sección de Video de Pasarela Dedicada */
+        .editorial-video-section {
+            margin-top: 55px;
         }
         .section-headline {
             font-family: 'Cormorant Garamond', serif;
@@ -675,41 +937,254 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         }
         .section-headline span { color: var(--gold); }
 
+        .video-player-theater {
+            position: relative;
+            max-width: 820px;
+            margin: 0 auto;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 2px solid var(--border-gold);
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.95), 0 0 50px rgba(234, 179, 8, 0.3);
+            background: #000;
+        }
+        .video-player-theater video {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+            display: block;
+            outline: none;
+            background: #000;
+        }
+        .video-theater-caption {
+            padding: 16px 24px;
+            background: rgba(1, 6, 25, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .video-theater-caption span {
+            font-size: 13px;
+            color: var(--gold);
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Galería Editorial Comp-Cards */
+        .editorial-gallery-section {
+            margin-top: 60px;
+        }
         .editorial-gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px;
         }
         .gallery-photo-card {
             position: relative;
-            aspect-ratio: 4/5;
-            border-radius: 16px;
+            aspect-ratio: 3/4.2;
+            border-radius: 20px;
             overflow: hidden;
             border: 1px solid var(--border-glass);
             cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+            transition: all 0.35s ease;
         }
         .gallery-photo-card:hover {
             transform: scale(1.04);
             border-color: var(--gold);
-            box-shadow: 0 15px 40px rgba(234, 179, 8, 0.35);
+            box-shadow: 0 20px 45px rgba(234, 179, 8, 0.4);
         }
         .gallery-photo-card img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .gallery-photo-card:hover img {
+            transform: scale(1.08);
+        }
+        .gallery-zoom-badge {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            background: rgba(1, 6, 25, 0.75);
+            backdrop-filter: blur(8px);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold);
+            font-size: 16px;
+            border: 1px solid var(--border-gold);
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+        .gallery-photo-card:hover .gallery-zoom-badge {
+            opacity: 1;
         }
 
         /* ==============================================================
-           3. MODAL Y VISTA VIP LINKTREE (/2026/#usuario)
+           THEATER MODAL: REPRODUCTOR DE VIDEO CINEMATOGRÁFICO
+           ============================================================== */
+        #videoTheaterModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(1, 6, 25, 0.94);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #videoTheaterModal.is-open {
+            display: flex;
+            animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .video-modal-container {
+            width: 100%;
+            max-width: 780px;
+            position: relative;
+            background: #000;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 2px solid var(--border-gold);
+            box-shadow: 0 35px 80px rgba(0, 0, 0, 0.98), 0 0 50px rgba(234, 179, 8, 0.4);
+        }
+        .video-modal-header {
+            padding: 16px 24px;
+            background: rgba(1, 6, 25, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .video-modal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            color: #fff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .video-modal-title span { color: var(--gold); }
+        .video-modal-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .video-modal-close:hover {
+            background: var(--accent);
+            transform: rotate(90deg);
+        }
+        .video-modal-player-box {
+            position: relative;
+            width: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-height: 75vh;
+        }
+        .video-modal-player-box video {
+            width: 100%;
+            max-height: 75vh;
+            outline: none;
+            display: block;
+        }
+        .video-modal-footer {
+            padding: 14px 24px;
+            background: rgba(1, 6, 25, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* ==============================================================
+           LIGHTBOX MODAL DE FOTOS
+           ============================================================== */
+        #lightboxModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(1, 6, 25, 0.96);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            z-index: 2100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #lightboxModal.is-open {
+            display: flex;
+            animation: modalFadeIn 0.25s ease;
+        }
+        .lightbox-img-wrap {
+            max-width: 90vw;
+            max-height: 85vh;
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.95);
+            border: 2px solid var(--border-gold);
+        }
+        .lightbox-img-wrap img {
+            max-width: 100%;
+            max-height: 85vh;
+            display: block;
+            object-fit: contain;
+        }
+        .lightbox-close-btn {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2110;
+            transition: all 0.2s;
+        }
+        .lightbox-close-btn:hover {
+            background: var(--accent);
+            transform: rotate(90deg);
+        }
+
+        /* ==============================================================
+           MODAL Y VISTA VIP LINKTREE (/2026/#usuario)
            ============================================================== */
         #linktreeModal {
             position: fixed;
             inset: 0;
-            background: rgba(1, 8, 32, 0.88);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(1, 6, 25, 0.9);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             z-index: 1000;
             display: none;
             align-items: center;
@@ -749,26 +1224,24 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             transform: rotate(90deg);
         }
 
-        /* Tarjeta VIP Linktree */
         .vip-linktree-card {
             width: 100%;
-            max-width: 440px;
-            background: rgba(4, 16, 48, 0.9);
+            max-width: 450px;
+            background: rgba(3, 14, 44, 0.92);
             border: 1.5px solid var(--border-gold);
-            border-radius: 28px;
-            padding: 38px 24px 30px;
-            box-shadow: 0 25px 65px rgba(0, 0, 0, 0.95), 0 0 40px rgba(234, 179, 8, 0.3);
+            border-radius: 32px;
+            padding: 40px 24px 32px;
+            box-shadow: 0 30px 75px rgba(0, 0, 0, 0.98), 0 0 45px rgba(234, 179, 8, 0.35);
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
         }
-
         .avatar-glow-wrap {
             position: relative;
-            width: 120px;
-            height: 120px;
+            width: 125px;
+            height: 125px;
             margin: 0 auto 18px;
         }
         .avatar-ring-glow {
@@ -777,14 +1250,13 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             border-radius: 50%;
             background: conic-gradient(from 180deg at 50% 50%, #f5245f 0deg, #eab308 180deg, #f5245f 360deg);
             filter: blur(10px);
-            opacity: 0.8;
+            opacity: 0.85;
             animation: ringRotate 8s linear infinite;
         }
         @keyframes ringRotate {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-
         .avatar-core-img {
             position: relative;
             width: 100%;
@@ -813,10 +1285,9 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-4px); }
         }
-
         .vip-name {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 1.95rem;
+            font-size: 2rem;
             font-weight: 700;
             color: #fff;
             margin-bottom: 2px;
@@ -827,7 +1298,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         }
         .verified-star {
             color: #38bdf8;
-            font-size: 16px;
+            font-size: 18px;
         }
         .vip-tag {
             font-size: 11px;
@@ -838,12 +1309,11 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             margin-bottom: 4px;
         }
         .vip-occ {
-            font-size: 0.85rem;
+            font-size: 0.88rem;
             color: #cbd5e1;
             margin-bottom: 18px;
         }
 
-        /* Lista de Enlaces en Linktree */
         .vip-links-list {
             width: 100%;
             display: flex;
@@ -854,8 +1324,8 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         .vip-link-btn {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-glass);
-            border-radius: 14px;
-            padding: 14px 18px;
+            border-radius: 16px;
+            padding: 14px 20px;
             color: #fff;
             text-decoration: none;
             font-size: 0.95rem;
@@ -871,13 +1341,12 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(234, 179, 8, 0.25);
         }
-
         .btn-open-editorial-switch {
             width: 100%;
             background: linear-gradient(135deg, #f5245f, #eab308);
             color: #fff;
             text-decoration: none;
-            padding: 13px 20px;
+            padding: 14px 20px;
             border-radius: 30px;
             font-size: 0.9rem;
             font-weight: 800;
@@ -898,10 +1367,10 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         footer.legado-footer {
             position: relative;
             z-index: 1;
-            padding: 50px 20px 80px;
+            padding: 55px 20px 85px;
             text-align: center;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(1, 8, 32, 0.95);
+            background: rgba(1, 6, 25, 0.96);
             font-size: 0.85rem;
             color: #64748b;
         }
@@ -923,14 +1392,14 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         <a href="/2026/?sede=<?= $sede ?>" class="brand-pill">
             <span class="brand-crown">👑</span>
             <div class="brand-text">
-                <span class="brand-title">Miss Universe <b><?= $sedeTitle ?></b></span>
+                <span class="brand-title">Miss Universe <b>Chile</b></span>
                 <span class="brand-sub">✧ Salón del Legado 2026 ✧</span>
             </div>
         </a>
 
         <div class="header-actions">
             <?php if ($candidate): ?>
-                <a href="/2026/?sede=<?= $sede ?>" class="btn-header">← Salón General</a>
+                <a href="/2026/?sede=<?= $candidate['sede'] ?>" class="btn-header">← Salón General</a>
             <?php else: ?>
                 <a href="/2027/" class="btn-header">Edición 2027 ↗</a>
             <?php endif; ?>
@@ -938,21 +1407,35 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         </div>
     </header>
 
-    <?php if ($candidate && !$isLinktreeView): ?>
+    <?php if ($candidate && !$isLinktreeView): 
+        // Obtener galería y videos
+        $candGallery = [];
+        if (!empty($candidate['photos_gallery'])) {
+            $candGallery = json_decode($candidate['photos_gallery'], true) ?: [];
+        }
+        $candVideos = [];
+        if (!empty($candidate['videos_gallery'])) {
+            $candVideos = json_decode($candidate['videos_gallery'], true) ?: [];
+        }
+    ?>
     <!-- ==============================================================
          VISTA 1: PERFIL EDITORIAL DE ALTA COSTURA (/2026/usuario)
          ============================================================== -->
     <main class="editorial-wrapper">
-        <div class="glass editorial-hero-grid" style="padding: 35px;">
+        <div class="editorial-back-nav">
+            <a href="/2026/?sede=<?= $candidate['sede'] ?>" class="btn-back-salon">← Volver al Salón del Legado (<?= strtoupper($candidate['sede']) ?>)</a>
+        </div>
+
+        <div class="glass editorial-hero-grid">
             <div class="portrait-frame-box">
                 <img src="<?= htmlspecialchars($candidate['photo_main']) ?>" alt="<?= htmlspecialchars($candidate['full_name']) ?>">
-                <div class="portrait-sash">MISSU 2026</div>
+                <div class="portrait-sash">MISSU 2026 · <?= strtoupper($candidate['sede']) ?></div>
             </div>
 
             <div class="editorial-info-box">
                 <div class="editorial-badge">
                     <span>👑</span>
-                    <span><?= htmlspecialchars($candidate['title_badge'] ?? 'Embajadora Oficial 2026') ?> · Miss Universo <?= $sedeTitle ?></span>
+                    <span><?= htmlspecialchars($candidate['title_badge'] ?? 'Embajadora Oficial 2026') ?> · Miss Universo <?= ucfirst($candidate['sede']) ?></span>
                 </div>
 
                 <h1 class="editorial-name"><?= htmlspecialchars($candidate['full_name']) ?></h1>
@@ -974,13 +1457,20 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
                 </div>
                 <?php endif; ?>
 
-                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;">
+                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:10px;">
                     <?php if ($candidate['mode_linktree']): ?>
                     <button type="button" class="btn-open-editorial-switch" style="max-width:280px;" onclick="openLinktreeModal('<?= htmlspecialchars($candidate['username']) ?>');">
                         <span>⚡</span>
                         <span>Abrir Bio-Link Linktree</span>
                     </button>
                     <?php endif; ?>
+
+                    <?php if (!empty($candVideos)): ?>
+                    <button type="button" class="btn-header" style="border-color:var(--gold); color:var(--gold);" onclick="document.getElementById('sectionVideoReel').scrollIntoView({behavior:'smooth'});">
+                        <span>▶</span> Reel de Pasarela HD
+                    </button>
+                    <?php endif; ?>
+
                     <button type="button" class="btn-header" onclick="shareProfile('<?= htmlspecialchars($candidate['full_name']) ?>', window.location.href);">
                         <span>🔗</span> Compartir Perfil
                     </button>
@@ -988,24 +1478,41 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             </div>
         </div>
 
-        <!-- Galería de Sesión Editorial -->
-        <?php
-        $gallery = [];
-        if (!empty($candidate['photos_gallery'])) {
-            $gallery = json_decode($candidate['photos_gallery'], true) ?: [];
-        }
-        if (!empty($gallery)):
+        <!-- Sección de Video de Pasarela Oficial (Si tiene) -->
+        <?php if (!empty($candVideos)): 
+            $mainVideo = $candVideos[0];
         ?>
-        <div class="editorial-gallery-section">
-            <h2 class="section-headline">Portafolio & <span>Sesión Oficial</span></h2>
+        <section class="editorial-video-section" id="sectionVideoReel">
+            <h2 class="section-headline">Reel de Pasarela & <span>Presentación HD</span></h2>
+            <div class="video-player-theater">
+                <video playsinline controls preload="metadata" poster="<?= htmlspecialchars($candidate['photo_main']) ?>">
+                    <source src="<?= htmlspecialchars($mainVideo) ?>" type="video/mp4">
+                    <source src="<?= htmlspecialchars($mainVideo) ?>" type="video/quicktime">
+                    Tu navegador no soporta reproducción de video HTML5.
+                </video>
+                <div class="video-theater-caption">
+                    <span>👑 Desfile & Video Oficial · Miss Universo <?= ucfirst($candidate['sede']) ?> 2026</span>
+                    <button type="button" class="btn-header" onclick="shareProfile('<?= htmlspecialchars($candidate['full_name']) ?>', '<?= htmlspecialchars($mainVideo) ?>');">
+                        <span>🔗</span> Compartir Video
+                    </button>
+                </div>
+            </div>
+        </section>
+        <?php endif; ?>
+
+        <!-- Galería de Sesión Editorial -->
+        <?php if (!empty($candGallery)): ?>
+        <section class="editorial-gallery-section">
+            <h2 class="section-headline">Portafolio & <span>Sesión de Alta Costura</span></h2>
             <div class="editorial-gallery-grid">
-                <?php foreach ($gallery as $gImg): ?>
+                <?php foreach ($candGallery as $gImg): ?>
                 <div class="gallery-photo-card" onclick="openLightbox('<?= htmlspecialchars($gImg) ?>');">
                     <img src="<?= htmlspecialchars($gImg) ?>" alt="<?= htmlspecialchars($candidate['full_name']) ?>" loading="lazy">
+                    <div class="gallery-zoom-badge">🔍</div>
                 </div>
                 <?php endforeach; ?>
             </div>
-        </div>
+        </section>
         <?php endif; ?>
     </main>
 
@@ -1013,7 +1520,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
     <!-- ==============================================================
          VISTA 2: VIP LINKTREE DIRECTO
          ============================================================== -->
-    <main style="position:relative; z-index:1; padding: 40px 20px; display:flex; justify-content:center;">
+    <main style="position:relative; z-index:1; padding: 50px 20px; display:flex; justify-content:center;">
         <div class="vip-linktree-card">
             <div class="avatar-glow-wrap">
                 <div class="avatar-ring-glow"></div>
@@ -1038,7 +1545,21 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             </div>
             <?php endif; ?>
 
-            <!-- Botones Personalizados -->
+            <!-- Botón de Video si tiene -->
+            <?php
+            $vidsLinktree = [];
+            if (!empty($candidate['videos_gallery'])) {
+                $vidsLinktree = json_decode($candidate['videos_gallery'], true) ?: [];
+            }
+            if (!empty($vidsLinktree)):
+            ?>
+            <button type="button" class="btn-card-action btn-card-action-video" style="width:100%; margin-bottom:14px; padding:13px;" onclick="openVideoTheater('<?= htmlspecialchars(addslashes($candidate['full_name'])) ?>', '<?= htmlspecialchars($vidsLinktree[0]) ?>', '<?= htmlspecialchars($candidate['username']) ?>', '<?= htmlspecialchars($candidate['sede']) ?>');">
+                <span>▶</span>
+                <span>Ver Reel de Pasarela HD</span>
+            </button>
+            <?php endif; ?>
+
+            <!-- Lista de Enlaces en Linktree -->
             <div class="vip-links-list">
                 <?php
                 $links = [];
@@ -1071,29 +1592,95 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
 
     <?php else: ?>
     <!-- ==============================================================
-         VISTA 3: SALÓN GENERAL DEL LEGADO 2026 (GRID DE TODAS)
+         VISTA 3: SALÓN GENERAL DEL LEGADO 2026 (EXPERIENCIA MONUMENTAL)
          ============================================================== -->
     <section class="salon-hero">
-        <div class="hero-eyebrow">✧ Archivo de la Corona Regional ✧</div>
+        <div class="hero-eyebrow">✧ Archivo de la Corona Regional · Generación 2026 ✧</div>
         <h1 class="hero-title">Salón del Legado 2026</h1>
-        <div class="hero-calligraphy">La historia que trasciende las coronas</div>
+        <div class="hero-calligraphy">Donde la belleza, el liderazgo y la historia trascienden</div>
         <p class="hero-desc">
-            Homenaje oficial a las embajadoras que forjaron el camino de Miss Universo en el norte de Chile. 
-            Explora sus portafolios editoriales, proyectos actuales y sus Bio-Links verificados.
+            Homenaje oficial a las 22 embajadoras que forjaron la historia de Miss Universo en el norte de Chile. 
+            Explora sus portafolios de alta costura, reels de pasarela en vivo y sus identidades digitales verificadas.
         </p>
+
+        <!-- Métricas Oficiales de Lujo -->
+        <div class="metrics-banner">
+            <div class="metric-pill">
+                <span>👑</span>
+                <span><strong><?= $countTotal ?></strong> Embajadoras Históricas</span>
+            </div>
+            <div class="metric-pill">
+                <span>🎥</span>
+                <span><strong><?= $countWithVideos ?></strong> Reels de Pasarela HD</span>
+            </div>
+            <div class="metric-pill">
+                <span>🏛️</span>
+                <span><strong>Iquique</strong> (<?= $countIquique ?>) & <strong>Arica</strong> (<?= $countArica ?>)</span>
+            </div>
+            <div class="metric-pill">
+                <span>📩</span>
+                <span>Bio-Links & Correos Verificados</span>
+            </div>
+        </div>
     </section>
 
-    <!-- Barra de Control: Sedes y Buscador -->
+    <!-- SPOTLIGHT: REELS DE PASARELA EN VIVO (CARRUSEL HORIZONTAL) -->
+    <?php if (!empty($candidatesWithVideos)): ?>
+    <section class="reels-spotlight-section">
+        <div class="reels-header-bar">
+            <div class="reels-title-box">
+                <span class="reels-badge-live">● EN VIVO</span>
+                <h2 class="reels-headline">Pasarela & <span>Reels Oficiales</span></h2>
+            </div>
+            <span style="font-size:12px; color:var(--text-muted);">Desliza para ver más reels →</span>
+        </div>
+
+        <div class="reels-track">
+            <?php foreach ($candidatesWithVideos as $rc): 
+                $rVids = json_decode($rc['videos_gallery'], true) ?: [];
+                $firstVid = $rVids[0] ?? '';
+                if (empty($firstVid)) continue;
+            ?>
+            <div class="reel-item-card" onclick="openVideoTheater('<?= htmlspecialchars(addslashes($rc['full_name'])) ?>', '<?= htmlspecialchars($firstVid) ?>', '<?= htmlspecialchars($rc['username']) ?>', '<?= htmlspecialchars($rc['sede']) ?>');">
+                <img src="<?= htmlspecialchars($rc['photo_main']) ?>" alt="<?= htmlspecialchars($rc['full_name']) ?>" class="reel-card-img" loading="lazy">
+                <div class="reel-scrim"></div>
+                <div class="reel-play-btn">▶</div>
+                <div class="reel-meta">
+                    <div class="reel-sede-tag">👑 <?= strtoupper($rc['sede']) ?></div>
+                    <div class="reel-name"><?= htmlspecialchars($rc['full_name']) ?></div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </section>
+    <?php endif; ?>
+
+    <!-- Barra de Control: Filtros Multi-Sede y Buscador -->
     <div class="controls-bar">
-        <div class="sede-switcher">
-            <a href="/2026/?sede=iquique" class="sede-btn <?= $sede === 'iquique' ? 'active' : '' ?>">Iquique (<?= $countIquique ?>)</a>
-            <a href="/2026/?sede=arica" class="sede-btn <?= $sede === 'arica' ? 'active' : '' ?>">Arica (<?= $countArica ?>)</a>
+        <div class="filter-pills-wrap">
+            <button type="button" class="filter-pill-btn <?= ($sede === 'arica' ? '' : ($sede === 'iquique' ? '' : 'active')) ?>" data-filter="all" onclick="setSalonFilter('all', this);">
+                <span>✦</span> Todas (<?= $countTotal ?>)
+            </button>
+            <button type="button" class="filter-pill-btn <?= ($sede === 'iquique') ? 'active' : '' ?>" data-filter="iquique" onclick="setSalonFilter('iquique', this);">
+                <span>👑</span> Iquique (<?= $countIquique ?>)
+            </button>
+            <button type="button" class="filter-pill-btn <?= ($sede === 'arica') ? 'active' : '' ?>" data-filter="arica" onclick="setSalonFilter('arica', this);">
+                <span>👑</span> Arica (<?= $countArica ?>)
+            </button>
+            <button type="button" class="filter-pill-btn" data-filter="video" onclick="setSalonFilter('video', this);">
+                <span>🎥</span> Con Pasarela / Video (<?= $countWithVideos ?>)
+            </button>
         </div>
 
         <div class="search-box">
             <span class="search-icon">🔍</span>
-            <input type="text" id="candSearchInput" class="search-input" placeholder="Buscar por nombre u ocupación..." oninput="filterCandidates(this.value);">
+            <input type="text" id="candSearchInput" class="search-input" placeholder="Buscar por nombre, sede o profesión..." oninput="handleSearch(this.value);">
         </div>
+    </div>
+
+    <div class="results-count-bar">
+        <span>Mostrando <b id="lblCountVisible"><?= $countTotal ?></b> embajadoras en el Salón Oficial</span>
+        <span style="font-size:11px; letter-spacing:1px; text-transform:uppercase;">Colección de Alta Costura</span>
     </div>
 
     <!-- Grid de Alta Costura -->
@@ -1101,27 +1688,46 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
         <div class="candidates-grid" id="gridCandidates">
             <?php foreach ($allCandidates as $idx => $c): 
                 $cNum = str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
+                $cVideos = [];
+                if (!empty($c['videos_gallery'])) {
+                    $cVideos = json_decode($c['videos_gallery'], true) ?: [];
+                }
+                $hasVideo = !empty($cVideos);
+                $firstVideoUrl = $hasVideo ? $cVideos[0] : '';
             ?>
-            <article class="candidate-card" data-name="<?= htmlspecialchars(strtolower($c['full_name'] . ' ' . $c['occupation'])) ?>">
+            <article class="candidate-card" 
+                     data-sede="<?= htmlspecialchars($c['sede']) ?>" 
+                     data-has-video="<?= $hasVideo ? '1' : '0' ?>"
+                     data-name="<?= htmlspecialchars(strtolower($c['full_name'] . ' ' . $c['occupation'] . ' ' . $c['sede'])) ?>">
+                
                 <img src="<?= htmlspecialchars($c['photo_main']) ?>" alt="<?= htmlspecialchars($c['full_name']) ?>" class="card-bg-photo" loading="lazy">
                 <div class="card-scrim"></div>
 
                 <div class="card-top-bar">
                     <span class="chip-number">✧ <?= $cNum ?> · <?= strtoupper($c['sede']) ?> ✧</span>
-                    <div class="chip-crown">👑</div>
+                    <?php if ($hasVideo): ?>
+                    <span class="chip-reel-badge">🎥 REEL HD</span>
+                    <?php endif; ?>
                 </div>
 
                 <div class="card-body">
-                    <div class="cand-card-tag"><?= htmlspecialchars($c['title_badge'] ?? 'Embajadora Oficial') ?></div>
+                    <div class="cand-card-tag">👑 <?= htmlspecialchars($c['title_badge'] ?? 'Embajadora Oficial') ?></div>
                     <h3 class="cand-card-name"><?= htmlspecialchars($c['full_name']) ?></h3>
                     <p class="cand-card-occ"><?= htmlspecialchars($c['occupation'] ?? 'Modelo & Embajadora') ?></p>
 
                     <div class="card-actions-bar">
-                        <button type="button" class="btn-card-linktree" onclick="openLinktreeModal('<?= htmlspecialchars($c['username']) ?>');">
-                            ⚡ Bio-Link
+                        <?php if ($hasVideo): ?>
+                        <button type="button" class="btn-card-action btn-card-action-video" onclick="openVideoTheater('<?= htmlspecialchars(addslashes($c['full_name'])) ?>', '<?= htmlspecialchars($firstVideoUrl) ?>', '<?= htmlspecialchars($c['username']) ?>', '<?= htmlspecialchars($c['sede']) ?>');">
+                            <span>▶ Pasarela</span>
                         </button>
-                        <a href="/2026/<?= htmlspecialchars($c['username']) ?>" class="btn-card-editorial">
-                            📖 Editorial
+                        <?php endif; ?>
+
+                        <button type="button" class="btn-card-action" onclick="openLinktreeModal('<?= htmlspecialchars($c['username']) ?>');">
+                            <span>⚡ Bio-Link</span>
+                        </button>
+
+                        <a href="/2026/<?= htmlspecialchars($c['username']) ?>" class="btn-card-action">
+                            <span>📖 Perfil</span>
                         </a>
                     </div>
                 </div>
@@ -1131,7 +1737,55 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
     </main>
     <?php endif; ?>
 
-    <!-- Modal Dinámico de Linktree (/2026/#usuario) -->
+    <!-- ==============================================================
+         TEATRO DE VIDEO MODAL CINEMATOGRÁFICO (#videoTheaterModal)
+         ============================================================== -->
+    <div id="videoTheaterModal" role="dialog" aria-modal="true">
+        <div class="video-modal-container">
+            <div class="video-modal-header">
+                <div class="video-modal-title">
+                    <span>👑</span>
+                    <span id="videoModalTitle">Reel de Pasarela</span>
+                </div>
+                <button type="button" class="video-modal-close" onclick="closeVideoTheater();">&times;</button>
+            </div>
+
+            <div class="video-modal-player-box">
+                <video id="theaterHtmlVideo" playsinline controls autoplay>
+                    <source id="theaterVideoSource" src="" type="video/mp4">
+                    Tu dispositivo no soporta reproducción de video HTML5.
+                </video>
+            </div>
+
+            <div class="video-modal-footer">
+                <div style="font-size:12px; color:var(--text-muted);" id="videoModalSede">
+                    Miss Universo Chile 2026
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <a id="videoModalProfileBtn" href="#" class="btn-header" style="padding:6px 14px;">
+                        <span>📖</span> Ver Portafolio
+                    </a>
+                    <button type="button" id="videoModalShareBtn" class="btn-header" style="padding:6px 14px;" onclick="shareCurrentVideo();">
+                        <span>🔗</span> Compartir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==============================================================
+         LIGHTBOX MODAL DE FOTOS (#lightboxModal)
+         ============================================================== -->
+    <div id="lightboxModal" role="dialog" aria-modal="true" onclick="closeLightbox();">
+        <button type="button" class="lightbox-close-btn" onclick="closeLightbox();">&times;</button>
+        <div class="lightbox-img-wrap" onclick="event.stopPropagation();">
+            <img id="lightboxImage" src="" alt="Sesión de Fotos">
+        </div>
+    </div>
+
+    <!-- ==============================================================
+         MODAL DINÁMICO DE LINKTREE (/2026/#usuario)
+         ============================================================== -->
     <div id="linktreeModal" role="dialog" aria-modal="true">
         <button type="button" class="modal-close-btn" onclick="closeLinktreeModal();">&times;</button>
         <div id="linktreeModalBody"></div>
@@ -1139,7 +1793,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
 
     <!-- Pie de Página -->
     <footer class="legado-footer">
-        <p>© 2026 - 2027 Miss Universo <?= $sedeTitle ?> · Franquicia Oficial de Belleza y Liderazgo Regional.</p>
+        <p>© 2026 - 2027 Miss Universo Chile · Salón Oficial del Legado Arica & Iquique.</p>
         <p style="margin-top:8px;">
             ¿Eres parte de la Generación 2026? <a href="/2026/editar.php">Ingresa a tu panel de embajadora oficial</a>
         </p>
@@ -1158,7 +1812,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             window.addEventListener('resize', resize);
             resize();
 
-            const stars = Array.from({ length: 65 }, () => ({
+            const stars = Array.from({ length: 70 }, () => ({
                 x: Math.random() * w,
                 y: Math.random() * h,
                 r: Math.random() * 1.5 + 0.3,
@@ -1173,7 +1827,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
                     s.y -= s.speed;
                     if (s.y < 0) { s.y = h; s.x = Math.random() * w; }
                     s.alpha += s.dAlpha;
-                    if (s.alpha > 0.9 || s.alpha < 0.2) s.dAlpha *= -1;
+                    if (s.alpha > 0.95 || s.alpha < 0.2) s.dAlpha *= -1;
 
                     ctx.fillStyle = `rgba(247, 208, 112, ${s.alpha})`;
                     ctx.shadowColor = '#eab308';
@@ -1187,16 +1841,140 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             animateStars();
         }
 
-        // Filtro en Vivo de Candidatas
-        function filterCandidates(query) {
-            const clean = query.toLowerCase().trim();
-            document.querySelectorAll('#gridCandidates .candidate-card').forEach(card => {
-                const name = card.dataset.name || '';
-                card.style.display = name.includes(clean) ? 'flex' : 'none';
-            });
+        // ==========================================
+        // FILTROS Y BÚSQUEDA REACTIVA EN VIVO
+        // ==========================================
+        let currentFilterType = '<?= ($sede === "iquique") ? "iquique" : (($sede === "arica") ? "arica" : "all") ?>';
+        let currentSearchQuery = '';
+
+        function setSalonFilter(type, btn) {
+            currentFilterType = type;
+            document.querySelectorAll('.filter-pill-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            applySalonFilters();
         }
 
-        // Copiar Texto
+        function handleSearch(q) {
+            currentSearchQuery = q.toLowerCase().trim();
+            applySalonFilters();
+        }
+
+        function applySalonFilters() {
+            const cards = document.querySelectorAll('#gridCandidates .candidate-card');
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const sede = card.getAttribute('data-sede') || '';
+                const hasVideo = card.getAttribute('data-has-video') === '1';
+                const name = card.getAttribute('data-name') || '';
+
+                // Filtro por tipo
+                let matchType = true;
+                if (currentFilterType === 'iquique') matchType = (sede === 'iquique');
+                else if (currentFilterType === 'arica') matchType = (sede === 'arica');
+                else if (currentFilterType === 'video') matchType = hasVideo;
+
+                // Filtro por búsqueda
+                let matchSearch = true;
+                if (currentSearchQuery !== '') {
+                    matchSearch = name.includes(currentSearchQuery);
+                }
+
+                if (matchType && matchSearch) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const lbl = document.getElementById('lblCountVisible');
+            if (lbl) lbl.textContent = visibleCount;
+        }
+
+        // Ejecutar filtro inicial
+        window.addEventListener('DOMContentLoaded', () => {
+            const initBtn = document.querySelector(`.filter-pill-btn[data-filter="${currentFilterType}"]`);
+            if (initBtn) setSalonFilter(currentFilterType, initBtn);
+        });
+
+        // ==========================================
+        // TEATRO DE VIDEO CINEMATOGRÁFICO
+        // ==========================================
+        let activeVideoUrl = '';
+
+        function openVideoTheater(name, videoUrl, username, sede) {
+            const modal = document.getElementById('videoTheaterModal');
+            const videoElem = document.getElementById('theaterHtmlVideo');
+            const sourceElem = document.getElementById('theaterVideoSource');
+            const titleElem = document.getElementById('videoModalTitle');
+            const sedeElem = document.getElementById('videoModalSede');
+            const profileBtn = document.getElementById('videoModalProfileBtn');
+
+            if (!modal || !videoElem) return;
+
+            activeVideoUrl = videoUrl;
+            titleElem.textContent = name;
+            sedeElem.innerHTML = `👑 Pasarela Oficial · Miss Universo ${sede.toUpperCase()} 2026`;
+            if (profileBtn) profileBtn.href = `/2026/${username}`;
+
+            sourceElem.src = videoUrl;
+            videoElem.load();
+            modal.classList.add('is-open');
+
+            const playPromise = videoElem.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    // Autoplay prevenido por navegador, requiere interacción manual
+                });
+            }
+        }
+
+        function closeVideoTheater() {
+            const modal = document.getElementById('videoTheaterModal');
+            const videoElem = document.getElementById('theaterHtmlVideo');
+            if (videoElem) {
+                videoElem.pause();
+                videoElem.currentTime = 0;
+            }
+            if (modal) modal.classList.remove('is-open');
+        }
+
+        function shareCurrentVideo() {
+            if (activeVideoUrl) {
+                shareProfile(document.getElementById('videoModalTitle').textContent, window.location.origin + activeVideoUrl);
+            }
+        }
+
+        // ==========================================
+        // LIGHTBOX DE FOTOS
+        // ==========================================
+        function openLightbox(imgSrc) {
+            const modal = document.getElementById('lightboxModal');
+            const img = document.getElementById('lightboxImage');
+            if (modal && img) {
+                img.src = imgSrc;
+                modal.classList.add('is-open');
+            }
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('lightboxModal');
+            if (modal) modal.classList.remove('is-open');
+        }
+
+        // Tecla ESC para cerrar cualquier modal
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeVideoTheater();
+                closeLightbox();
+                closeLinktreeModal();
+            }
+        });
+
+        // ==========================================
+        // COMPARTIR Y COPIAR
+        // ==========================================
         function copyText(text, btn) {
             navigator.clipboard.writeText(text).then(() => {
                 const orig = btn.textContent;
@@ -1209,7 +1987,6 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             });
         }
 
-        // Compartir
         function shareProfile(name, url) {
             if (navigator.share) {
                 navigator.share({
@@ -1217,12 +1994,13 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
                     url: url
                 }).catch(() => {});
             } else {
-                copyText(url, { textContent: 'Copiar', style: {} });
-                alert('Enlace copiado al portapapeles: ' + url);
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Enlace copiado al portapapeles: ' + url);
+                });
             }
         }
 
-        // Detección Hash
+        // Detección Hash para Linktree (#usuario)
         window.addEventListener('DOMContentLoaded', () => {
             const hash = window.location.hash.replace('#', '').trim();
             if (hash && hash !== '') {
@@ -1230,7 +2008,9 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
             }
         });
 
-        // Abrir Modal Linktree Dinámico
+        // ==========================================
+        // MODAL DINÁMICO LINKTREE VIP
+        // ==========================================
         async function openLinktreeModal(username) {
             const modal = document.getElementById('linktreeModal');
             const body = document.getElementById('linktreeModalBody');
@@ -1278,6 +2058,18 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
                 });
             }
 
+            let videoBtnHtml = '';
+            let vids = [];
+            try { vids = typeof c.videos_gallery === 'string' ? JSON.parse(c.videos_gallery) : c.videos_gallery; } catch(e){}
+            if (vids && Array.isArray(vids) && vids.length > 0) {
+                videoBtnHtml = `
+                    <button type="button" class="btn-card-action btn-card-action-video" style="width:100%; margin-bottom:14px; padding:13px; font-size:12px;" onclick="closeLinktreeModal(); openVideoTheater('${c.full_name.replace(/'/g, "\\'")}', '${vids[0]}', '${c.username}', '${c.sede}');">
+                        <span>▶</span>
+                        <span>Ver Reel de Pasarela HD</span>
+                    </button>
+                `;
+            }
+
             body.innerHTML = `
                 <div class="vip-linktree-card">
                     <div class="avatar-glow-wrap">
@@ -1294,7 +2086,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
                     <p class="vip-occ">${c.occupation || 'Modelo & Figura Pública'}</p>
 
                     ${c.inst_email ? `
-                    <div class="inst-email-banner" style="width:100%; margin-bottom:18px;">
+                    <div class="inst-email-banner" style="width:100%; margin-bottom:16px;">
                         <div class="inst-email-text" style="text-align:left;">
                             <small>📩 Correo Oficial Miss Universo</small>
                             <span>${c.inst_email}</span>
@@ -1303,6 +2095,8 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
                     </div>
                     ` : ''}
 
+                    ${videoBtnHtml}
+
                     <div class="vip-links-list">
                         ${linksHtml}
                     </div>
@@ -1310,7 +2104,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE sede = 
                     ${c.mode_editorial ? `
                     <a href="/2026/${encodeURIComponent(c.username)}" class="btn-open-editorial-switch">
                         <span>📖</span>
-                        <span>Ver Portafolio Editorial</span>
+                        <span>Ver Portafolio Editorial Completo</span>
                         <span>→</span>
                     </a>
                     ` : ''}

@@ -853,6 +853,30 @@ $baseUrl = "https://missuniverso{$sede}.cl";
                 </div>
             </div>
 
+            <!-- SECCIÓN 2.5: Video Reel de Pasarela HD -->
+            <div class="glass section-card">
+                <div class="section-header">
+                    <span>🎥</span>
+                    <h3>Video Reel de Pasarela & Presentación HD</h3>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Video de Pasarela Oficial (.mp4, .mov o enlace web)</label>
+                    <?php
+                    $vids = [];
+                    if (!empty($candidate['videos_gallery'])) {
+                        $vids = json_decode($candidate['videos_gallery'], true) ?: [];
+                    }
+                    $candVideoUrl = !empty($vids) ? $vids[0] : '';
+                    ?>
+                    <div id="videoPreviewWrap" style="<?= empty($candVideoUrl) ? 'display:none;' : '' ?> margin-bottom:15px; border-radius:16px; overflow:hidden; border:1px solid var(--border-gold); background:#000;">
+                        <video id="editorVideoElem" playsinline controls style="width:100%; max-height:360px; display:block;" src="<?= htmlspecialchars($candVideoUrl) ?>"></video>
+                    </div>
+                    <input type="text" id="videoUrlInput" class="form-input" value="<?= htmlspecialchars($candVideoUrl) ?>" placeholder="/uploads/... o https://..." oninput="handleVideoUrlChange(this.value);">
+                    <div class="form-help">Enlace directo a tu video de pasarela o presentación en alta definición. Se mostrará en tu perfil editorial y salón de legado.</div>
+                </div>
+            </div>
+
             <!-- SECCIÓN 3: Identidad y Contacto -->
             <div class="glass section-card">
                 <div class="section-header">
@@ -1095,6 +1119,20 @@ $baseUrl = "https://missuniverso{$sede}.cl";
             }
         }
 
+        let currentVideoUrl = "<?= htmlspecialchars($candVideoUrl) ?>";
+        function handleVideoUrlChange(val) {
+            currentVideoUrl = val.trim();
+            const wrap = document.getElementById('videoPreviewWrap');
+            const vid = document.getElementById('editorVideoElem');
+            if (currentVideoUrl) {
+                wrap.style.display = 'block';
+                vid.src = currentVideoUrl;
+            } else {
+                wrap.style.display = 'none';
+                vid.src = '';
+            }
+        }
+
         // Guardar Perfil Completo
         async function saveProfile(e) {
             e.preventDefault();
@@ -1116,6 +1154,10 @@ $baseUrl = "https://missuniverso{$sede}.cl";
             fd.append('mode_editorial', document.getElementById('mode_editorial').checked ? '1' : '0');
             fd.append('is_minimal_record', document.getElementById('is_minimal_record').checked ? '1' : '0');
             
+            // Video de Pasarela
+            const vidsToSave = currentVideoUrl ? [currentVideoUrl] : [];
+            fd.append('videos_gallery', JSON.stringify(vidsToSave));
+
             // Filtrar enlaces vacíos
             const validLinks = customLinksData.filter(l => l.title.trim() !== '' && l.url.trim() !== '');
             fd.append('custom_links', JSON.stringify(validLinks));

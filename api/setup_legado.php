@@ -1,12 +1,13 @@
 <?php
 /**
  * Setup & Seed: Legado 2026 Candidatas (Arica: 10 & Iquique: 12 Oficiales)
+ * Incluye galerías de alta costura y videos oficiales de pasarela.
  */
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../config/db.php';
 
 try {
-    // 1. Crear tabla legado_2026
+    // 1. Crear tabla legado_2026 con soporte para videos_gallery
     $pdo->exec("CREATE TABLE IF NOT EXISTS legado_2026 (
         id INT AUTO_INCREMENT PRIMARY KEY,
         sede ENUM('arica', 'iquique') NOT NULL,
@@ -18,6 +19,7 @@ try {
         photo_main VARCHAR(255) NOT NULL,
         photo_cover VARCHAR(255) NULL,
         photos_gallery TEXT NULL,
+        videos_gallery TEXT NULL,
         occupation VARCHAR(150) NULL,
         bio TEXT NULL,
         instagram VARCHAR(100) NULL,
@@ -34,10 +36,17 @@ try {
         UNIQUE KEY uk_sede_username (sede, username)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-    // Limpiar candidatas dummy que se crearon de prueba inicial en Iquique
+    // Asegurar que la columna videos_gallery exista si la tabla ya estaba creada
+    try {
+        $pdo->exec("ALTER TABLE legado_2026 ADD COLUMN videos_gallery TEXT NULL AFTER photos_gallery");
+    } catch (Throwable $e) {}
+
+    // Limpiar candidatas dummy
     $pdo->exec("DELETE FROM legado_2026 WHERE sede = 'iquique' AND username IN ('constanzamorales', 'valentinacastillo', 'martinasoto', 'camila')");
 
+    // ==========================================
     // CANDIDATAS OFICIALES ARICA (10)
+    // ==========================================
     $candidatasArica = [
         [
             'full_name' => 'Laura Riquelme Cayuleo',
@@ -48,6 +57,9 @@ try {
             'occupation' => 'Modelo & Embajadora Cultural',
             'gallery' => [
                 '/uploads/admin_cmlk8x21h0003gerkutyqwd53_1773967765801_DSC01282.jpg'
+            ],
+            'videos' => [
+                '/uploads/intro_cmlk8x21h0003gerkutyqwd53_1772975045068_0306(14).mp4'
             ]
         ],
         [
@@ -60,7 +72,8 @@ try {
             'gallery' => [
                 '/uploads/gallery_cmloa2huw004rgexocsybvjnj_1776350607944_1000134452.jpg',
                 '/uploads/admin_cmlk8x21h0003gerkutyqwd53_1773967765801_DSC01282.jpg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Rayen Millarau Coscio Pizarro',
@@ -71,6 +84,9 @@ try {
             'occupation' => 'Modelo de Pasarela',
             'gallery' => [
                 '/uploads/gallery_cmlsv1spl000xge2cfm8aorir_1774091557756_5B568FAB-9573-412E-BAC7-107374299AF2.jpeg'
+            ],
+            'videos' => [
+                '/uploads/intro_cmlsv1spl000xge2cfm8aorir_1772975005465_0306(12).mp4'
             ]
         ],
         [
@@ -82,6 +98,9 @@ try {
             'occupation' => 'Modelo & Emprendedora',
             'gallery' => [
                 '/uploads/gallery_cmlvq05rs005jgeb4z3n6yvle_1776129845525_IMG-20260413-WA0008.jpg'
+            ],
+            'videos' => [
+                '/uploads/intro_cmlvq05rs005jgeb4z3n6yvle_1772977368880_0306(17).mp4'
             ]
         ],
         [
@@ -93,6 +112,9 @@ try {
             'occupation' => 'Diseño & Comunicación',
             'gallery' => [
                 '/uploads/gallery_cmm4bybrf00mfgeb4p9fn1kzh_1775707760310_inbound7397300269220917351.jpg'
+            ],
+            'videos' => [
+                '/uploads/intro_cmm4bybrf00mfgeb4p9fn1kzh_1772975150151_0306(11).mp4'
             ]
         ],
         [
@@ -104,6 +126,9 @@ try {
             'occupation' => 'Liderazgo & Talento Regional',
             'gallery' => [
                 '/uploads/gallery_cmmcokz80002bge7gaq6vwbjz_1775929704462_1000027597.jpg'
+            ],
+            'videos' => [
+                '/uploads/intro_cmmcokz80002bge7gaq6vwbjz_1772974880130_0306(16).mp4'
             ]
         ],
         [
@@ -115,7 +140,8 @@ try {
             'occupation' => 'Modelo Editorial',
             'gallery' => [
                 '/uploads/dsyvu5mupk6a43l3_FULL_BODY_1772714637340_DSC00242.jpeg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Nicol Estefanía Noemí Viveros Navarro',
@@ -126,7 +152,8 @@ try {
             'occupation' => 'Estudiante de Derecho & Modelo',
             'gallery' => [
                 '/uploads/gallery_cmmki79iw005ugef0zo4vl9zp_1775933080796_A23981E5-01E4-4BFA-A344-B494F693F882.jpeg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Nayareth Elizabeth Sandoval Sepúlveda',
@@ -137,7 +164,8 @@ try {
             'occupation' => 'Emprendedora Social',
             'gallery' => [
                 '/uploads/gallery_cmmts87ns010mgegkp57r9vax_1777012295374_inbound3697726264616469069.jpg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Liz Rivera',
@@ -148,11 +176,14 @@ try {
             'occupation' => 'Fitness & Moda',
             'gallery' => [
                 '/uploads/gallery_cmnb3yj7o000bgewsfoc8jwyq_1776646137784_IMG_1075.jpeg'
-            ]
+            ],
+            'videos' => []
         ]
     ];
 
-    // CANDIDATAS OFICIALES IQUIQUE (12 REALES)
+    // ==========================================
+    // CANDIDATAS OFICIALES IQUIQUE (12)
+    // ==========================================
     $candidatasIquique = [
         [
             'full_name' => 'Jacqueline Lorena Corona Herrera',
@@ -166,7 +197,8 @@ try {
                 '/uploads/qm4dbeg5cxepxho7_PROFILE_1770046779346_WhatsApp_Image_2026-01-05_at_8.48.37_PM_(1).jpeg',
                 '/uploads/qm4dbeg5cxepxho7_FULL_BODY_1770046900167_WhatsApp_Image_2025-12-29_at_5.34.57_PM.jpeg',
                 '/uploads/qm4dbeg5cxepxho7_EDITORIAL_1770046919668_WhatsApp_Image_2026-01-12_at_9.12.46_PM.jpeg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Quri Mayiri García Ayca',
@@ -183,6 +215,9 @@ try {
                 '/uploads/gallery_cml66yj17000vge7c2ck2ewsk_1774845879817_IMG_7038.jpeg',
                 '/uploads/gallery_cml66yj17000vge7c2ck2ewsk_1774845891622_IMG_7041.jpeg',
                 '/uploads/gallery_cml66yj17000vge7c2ck2ewsk_1776428334422_IMG_9439.jpeg'
+            ],
+            'videos' => [
+                '/uploads/chhaazemblxifcvu_video_1774846292502_copy_8EA2DCFD-EED8-491A-9535-078C13A18DD2.mov'
             ]
         ],
         [
@@ -199,7 +234,8 @@ try {
                 '/uploads/2la2xo23xuu6fcx5_EDITORIAL_1770173041215_IMG_0466.jpeg',
                 '/uploads/gallery_cml7fh4kr0011ge7cwto5eiy3_1774956244979_990f5bc4-ad1f-4615-97c0-fcdd4fbcbc02.jpeg',
                 '/uploads/gallery_cml7fh4kr0011ge7cwto5eiy3_1774956308607_IMG_6329.jpeg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Javiera Antonia García Colipi',
@@ -215,7 +251,8 @@ try {
                 '/uploads/gallery_cmljrb49t0003gem40xu4v2r8_1774610548818_inbound6231487968327669847.jpg',
                 '/uploads/gallery_cmljrb49t0003gem40xu4v2r8_1774622599553_inbound8144867710405423382.png',
                 '/uploads/gallery_cmljrb49t0003gem40xu4v2r8_1774622622210_inbound8836512741724488917.png'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Grace Barbara Valdovino Averanga',
@@ -231,6 +268,9 @@ try {
                 '/uploads/gallery_cmljylsgt0009gem4abqv4slv_1775769472019_inbound8750299611960434791.jpg',
                 '/uploads/gallery_cmljylsgt0009gem4abqv4slv_1775769670982_inbound2742629846065857751.jpg',
                 '/uploads/gallery_cmljylsgt0009gem4abqv4slv_1775770160373_inbound3979275635157099748.jpg'
+            ],
+            'videos' => [
+                '/uploads/2sistdktft2df65m_video_1770931011759_inbound2338341915832449032.mp4'
             ]
         ],
         [
@@ -247,6 +287,9 @@ try {
                 '/uploads/gallery_cmlx3o0f700cegerwqtdkg9tl_1775115642952_WhatsApp_Image_2026-04-02_at_04.38.00_(1).jpeg',
                 '/uploads/gallery_cmlx3o0f700cegerwqtdkg9tl_1775116133980_WhatsApp_Image_2026-04-02_at_04.48.18.jpeg',
                 '/uploads/gallery_cmlx3o0f700cegerwqtdkg9tl_1775116148983_WhatsApp_Image_2026-04-02_at_04.48.19.jpeg'
+            ],
+            'videos' => [
+                '/uploads/yrkceqgoqkoebbpw_video_1776719660188_92648.mp4'
             ]
         ],
         [
@@ -262,7 +305,8 @@ try {
                 '/uploads/gallery_cmmo9sevw003zgezwmohjlcxc_1777000780608_IMG_1421.jpeg',
                 '/uploads/gallery_cmmo9sevw003zgezwmohjlcxc_1777001980596_IMG_9969.jpeg',
                 '/uploads/gallery_cmmo9sevw003zgezwmohjlcxc_1777002216163_IMG_1587.jpeg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Bianca Javiera Ahuile Franchini',
@@ -278,7 +322,8 @@ try {
                 '/uploads/gallery_cmmsfgaek0061gejkx2ukwj31_1774575074323_IMG_4278.jpg',
                 '/uploads/gallery_cmmsfgaek0061gejkx2ukwj31_1774575091218_IMG_4287.jpg',
                 '/uploads/gallery_cmmsfgaek0061gejkx2ukwj31_1774575121289_IMG_4104.jpg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Carla Vial Muñoz',
@@ -294,7 +339,8 @@ try {
                 '/uploads/bpwpth3o345amghu_EDITORIAL_1773798501244_WhatsApp_Image_2026-03-17_at_8.40.37_PM.jpeg',
                 '/uploads/gallery_cmmvdye7m003xgelc9bc5nq7h_1774361073140_4B9D21CA-CF3F-41FF-8379-5FF8050F1695.jpeg',
                 '/uploads/gallery_cmmvdye7m003xgelc9bc5nq7h_1774361112167_046A61EF-5735-4784-B90A-AC169E87E7C4.jpeg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Javiera Andrea Vivar Suazo',
@@ -309,7 +355,8 @@ try {
                 '/uploads/haewywys7clf3uak_EDITORIAL_1774368694906_1000200004.jpg',
                 '/uploads/gallery_cmn4tbzpm0073geckusv9mv2l_1774705946636_1000205539.jpg',
                 '/uploads/gallery_cmn4tbzpm0073geckusv9mv2l_1774879055520_WhatsApp_Image_2026-03-29_at_10.49.20_PM.jpeg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Poleth Valentina León Tapia',
@@ -325,7 +372,8 @@ try {
                 '/uploads/a75cykvvd32j5ybf_EDITORIAL_1774371649440_1c13f325-e2ff-473d-bd95-57c6e1ade21c.jpeg',
                 '/uploads/gallery_cmn4v2vvf008ngeck7jwky06t_1775307820693_IMG_0134.jpeg',
                 '/uploads/gallery_cmn4v2vvf008ngeck7jwky06t_1775307839057_7c661c21-67f0-4ad2-9f1a-e80bf22aa1ae.jpeg'
-            ]
+            ],
+            'videos' => []
         ],
         [
             'full_name' => 'Yessamin Natalia Peredo Celedón',
@@ -338,19 +386,21 @@ try {
                 '/uploads/2mipvwmmh3mq6ppt_FACE_1774487466089_36125E14-670F-4EF4-8823-6BCD08EB7141.jpeg',
                 '/uploads/2mipvwmmh3mq6ppt_PROFILE_1774487405511_IMG_0321.jpeg',
                 '/uploads/2mipvwmmh3mq6ppt_EDITORIAL_1774487453262_IMG_9348.jpeg'
-            ]
+            ],
+            'videos' => []
         ]
     ];
 
     $stmtInsert = $pdo->prepare("
         INSERT INTO legado_2026 (
             sede, username, full_name, title_badge, email_personal, inst_email,
-            photo_main, photos_gallery, occupation, bio, custom_links, magic_token
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            photo_main, photos_gallery, videos_gallery, occupation, bio, custom_links, magic_token
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             full_name = VALUES(full_name),
             photo_main = VALUES(photo_main),
             photos_gallery = VALUES(photos_gallery),
+            videos_gallery = VALUES(videos_gallery),
             occupation = VALUES(occupation),
             email_personal = VALUES(email_personal),
             inst_email = VALUES(inst_email)
@@ -364,6 +414,7 @@ try {
             $instEmail = "{$c['username']}@2026.missuniverso{$sede}.cl";
             $defaultBio = "Parte imborrable de la historia oficial de Miss Universo {$sede} 2026. Representando la belleza, elegancia, liderazgo y talento del norte de Chile.";
             $galleryJson = json_encode($c['gallery'] ?? [], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            $videosJson = json_encode($c['videos'] ?? [], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             
             $defaultLinks = json_encode([
                 ['title' => 'Instagram Oficial', 'url' => 'https://instagram.com/' . $c['username'], 'icon' => 'instagram'],
@@ -379,6 +430,7 @@ try {
                 $instEmail,
                 $c['photo'],
                 $galleryJson,
+                $videosJson,
                 $c['occupation'],
                 $defaultBio,
                 $defaultLinks,
@@ -394,7 +446,7 @@ try {
 
     echo json_encode([
         'status' => 'success',
-        'message' => 'Base de datos de legado actualizada con 10 candidatas de Arica y 12 candidatas de Iquique',
+        'message' => 'Base de datos de legado actualizada con 10 candidatas de Arica y 12 de Iquique, incluyendo galerias de alta costura y videos oficiales',
         'total' => $total,
         'arica' => $totArica,
         'iquique' => $totIquique
