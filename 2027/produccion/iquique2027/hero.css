@@ -1,0 +1,37 @@
+/* One isolated background plane; foreground layers never participate in slides. */
+#crystal-scene{isolation:isolate;overflow:hidden}
+#crystal-scene .hero-media-wrap{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:0!important;transform:none!important;translate:none!important;pointer-events:none}
+#crystal-scene .hero-photo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;transform:none;animation:none!important;transition:opacity 900ms linear!important}
+#crystal-scene>.scene-landscape,#crystal-scene>.iq-coast{display:none!important}
+#crystal-scene>.scene-muse,#crystal-scene>.iq-muse,#crystal-scene>.scene-frame,#crystal-scene>.iq-crystal-frame{z-index:2!important;translate:0 0!important;transform:none!important;animation:none!important;pointer-events:none}
+#crystal-scene>.scene-aura,#crystal-scene>.iq-vignette,#crystal-scene>canvas{z-index:1!important;pointer-events:none}
+#crystal-scene>.scene-copy,#crystal-scene>.iq-hero-copy,#crystal-scene>.hero-portals,#crystal-scene>.iq-portal-bar,#crystal-scene>.iq-city-signature{z-index:4!important}
+#crystal-scene>.motion-toggle,#crystal-scene>.hero-slide-index,#crystal-scene>.campaign-credit,#crystal-scene>.iq-art-notice{z-index:5!important}
+.hero-editor{max-width:1280px;margin:25px auto;padding:30px 5%;color:#eef4ff;background:#06132af5;border:1px solid #536d9b;border-radius:14px}
+#crystal-scene>.hero-slide-index{position:absolute;left:auto;right:5%;bottom:135px;display:flex;gap:8px}
+#crystal-scene>.hero-slide-index button{min-width:40px;min-height:40px;border:1px solid #9bb8ef;background:#071b45cc;color:white;border-radius:50%;font-size:12px}
+#crystal-scene>.hero-slide-index button[aria-pressed=true]{background:#6537a5;border-color:white}
+.hero-editor h1{font-size:clamp(26px,4vw,44px)}
+.hero-editor p{line-height:1.7}.hero-toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}
+.hero-editor button,.hero-editor select{min-height:44px;padding:10px 16px;background:#16274d;color:white;border:1px solid #7c9bd4;border-radius:8px;font:inherit}
+.hero-editor button[aria-pressed=true]{background:#5746b5;border-color:#e4c9ff}
+.hero-editor input{width:100%;min-height:44px;padding:10px;background:#f3f6ff;color:#102144;border:1px solid #839bc2;border-radius:7px;font:inherit}
+.hero-editor label{display:block;margin:15px 0;font-size:14px}.hero-editor input[type=checkbox]{width:20px;min-height:20px}
+.hero-fields,.hero-points{display:grid;grid-template-columns:1fr 1fr;gap:22px}.hero-points fieldset{min-width:0;border:1px solid #657ca5;border-radius:10px;padding:18px}
+.hero-editor input[type=range]{padding:0;accent-color:#b88aff}
+.hero-preview-shell{background:#02091a;padding:18px;border:1px solid #657ca5;border-radius:12px;overflow:hidden}
+.hero-preview{position:relative;overflow:hidden;isolation:isolate;width:100%;aspect-ratio:1270/650;max-width:100%;margin:auto;background:#07142b;touch-action:none;cursor:grab}
+.hero-preview[data-device=mobile]{aspect-ratio:390/900;width:390px;max-width:100%}
+.hero-preview>img.hero-preview-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:none}
+.hero-preview>.hero-preview-model{position:absolute;left:-3%;bottom:0;height:100%;width:45%;object-fit:contain;object-position:left bottom;pointer-events:none;z-index:2}
+.hero-preview>.hero-preview-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:3}
+.hero-preview>.hero-preview-wordmark{position:absolute;left:38%;top:26%;width:30%;text-align:center;z-index:4;pointer-events:none;text-shadow:0 2px 15px #000}
+.hero-preview-wordmark img{width:55%;display:block;margin:auto}.hero-preview-wordmark b{display:block;font-size:clamp(12px,2vw,28px)}
+.hero-preview[data-device=mobile]>.hero-preview-model{width:110%;height:62%;left:-30%;top:6%;bottom:auto;mask-image:linear-gradient(black 65%,transparent)}
+.hero-preview[data-device=mobile]>.hero-preview-wordmark{left:12%;top:48%;width:76%}
+.hero-preview-caption{font-size:13px;color:#c9d8f2}.hero-save-status{white-space:pre-line;min-height:28px}
+@media(max-width:650px){.hero-fields,.hero-points{grid-template-columns:1fr}.hero-editor{padding:25px 5%}.hero-preview-shell{padding:8px}#crystal-scene>.hero-slide-index{bottom:185px;right:4%}}
+@media(prefers-reduced-motion:reduce){#crystal-scene .hero-photo{transition:none!important}}
+
+/* Visible even if the API, decoder or animation is unavailable. */
+#crystal-scene .hero-media-wrap{background-image:url("/iquique2027/assets/neon/iquique-night.webp");background-position:center;background-size:cover;background-repeat:no-repeat}

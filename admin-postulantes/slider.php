@@ -376,6 +376,7 @@ $countIquique = (int)$pdo->query("SELECT COUNT(*) FROM slider_slides WHERE sede 
         <div class="header-actions">
             <a href="index.php" class="btn-nav">📋 Postulantes Casting</a>
             <a href="slider.php" class="btn-nav" style="border-color:var(--gold); color:var(--gold);">🖼️ Hero Slider</a>
+            <a href="legado.php" class="btn-nav" style="border-color:var(--pink); color:#ff8fab;">👑 Legado 2026</a>
             <span style="color:#666">|</span>
             <span style="font-size: 0.85rem; color:#bbb"><?= htmlspecialchars($_SESSION['admin_name'] ?? 'Admin') ?></span>
             <a href="index.php?logout=1" class="btn-logout">Cerrar Sesión</a>

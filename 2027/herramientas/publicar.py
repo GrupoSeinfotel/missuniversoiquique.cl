@@ -42,7 +42,7 @@ def stage():
   rel=p.relative_to(PUBLIC).as_posix()
   if '/assets/neon/' in '/'+rel and p.suffix=='.png':continue # maestros preservados localmente; se sirven los WEBP optimizados.
   if p.suffix not in {'.html','.css','.js','.json','.svg','.webp','.png','.php'} and p.name!='.htaccess':raise RuntimeError('Tipo no autorizado: '+rel)
-  if '..' in rel or not (rel.startswith('iquique2027/') or rel.startswith('legado/2026/')):raise RuntimeError('Destino fuera del alcance de Iquique 2027')
+  if '..' in rel or not (rel.startswith('iquique2027/') or rel.startswith('legado/2026/') or rel in ('api/slider.php','admin-postulantes/slider.php')):raise RuntimeError('Destino fuera del alcance de Iquique 2027')
   files.append((p,'/'+rel))
  f=connect();uploaded=[]
  try:

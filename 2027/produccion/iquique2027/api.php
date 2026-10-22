@@ -66,6 +66,7 @@ try {
  $pdo->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_ASSOC);$pdo->exec('SET NAMES utf8mb4');migrate($pdo);
  $path=trim((string)($_GET['action']??'public'),'/');$method=$_SERVER['REQUEST_METHOD'];$user=$_SESSION['user']??null;
  if($user){$fresh=query($pdo,'SELECT id,name,email,role FROM iquique27_users WHERE id=?',[$user['id']])->fetch();$user=$fresh?:null;}
+ require __DIR__.'/hero-api.php';
  if($method==='GET'){
   if($path==='me')reply(['user'=>$user,'csrf'=>$_SESSION['csrf']]);
   if($path==='public'){

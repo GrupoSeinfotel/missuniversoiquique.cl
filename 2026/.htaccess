@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /2026/
+
+# Si es un archivo o directorio existente, servirlo directamente
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Si piden editar.php o api.php, dejarlos pasar
+RewriteRule ^(editar|api)\.php$ - [L]
+
+# Cualquier otra ruta bajo /2026/usuario mapear a index.php?user=usuario
+RewriteRule ^([a-zA-Z0-9_\-\.]+)/?$ index.php?user=$1 [QSA,L]
+</IfModule>
