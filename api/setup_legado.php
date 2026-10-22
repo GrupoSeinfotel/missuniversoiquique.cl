@@ -47,8 +47,7 @@ try {
             'title_badge' => 'Candidata Oficial 2026',
             'occupation' => 'Modelo & Embajadora Cultural',
             'gallery' => [
-                '/uploads/admin_cmlk8x21h0003gerkutyqwd53_1773967765801_DSC01282.jpg',
-                '/uploads/gallery_cmlloa4huw004rgexocsybvjnj_1776350607944_1000134452.jpg'
+                '/uploads/admin_cmlk8x21h0003gerkutyqwd53_1773967765801_DSC01282.jpg'
             ]
         ],
         [
@@ -164,9 +163,9 @@ try {
             'occupation' => 'Modelo & Emprendedora Iquiqueña',
             'gallery' => [
                 '/uploads/qm4dbeg5cxepxho7_FACE_1770046761213_WhatsApp_Image_2026-01-05_at_8.48.37_PM.jpeg',
-                '/uploads/qm4dbeg5cxepxho7_PROFILE_1770046777610_WhatsApp_Image_2026-01-05_at_8.48.38_PM.jpeg',
-                '/uploads/qm4dbeg5cxepxho7_FULL_BODY_1770046798055_WhatsApp_Image_2026-01-05_at_8.48.38_PM_(1).jpeg',
-                '/uploads/qm4dbeg5cxepxho7_EDITORIAL_1770046830744_WhatsApp_Image_2026-01-05_at_8.48.37_PM_(1).jpeg'
+                '/uploads/qm4dbeg5cxepxho7_PROFILE_1770046779346_WhatsApp_Image_2026-01-05_at_8.48.37_PM_(1).jpeg',
+                '/uploads/qm4dbeg5cxepxho7_FULL_BODY_1770046900167_WhatsApp_Image_2025-12-29_at_5.34.57_PM.jpeg',
+                '/uploads/qm4dbeg5cxepxho7_EDITORIAL_1770046919668_WhatsApp_Image_2026-01-12_at_9.12.46_PM.jpeg'
             ]
         ],
         [
@@ -178,11 +177,12 @@ try {
             'occupation' => 'Cultura & Identidad Regional',
             'gallery' => [
                 '/uploads/chhaazemblxifcvu_FACE_1770098445062_IMG_7945.png',
-                '/uploads/chhaazemblxifcvu_PROFILE_1770098453472_IMG_7944.png',
-                '/uploads/chhaazemblxifcvu_FULL_BODY_1770098462007_IMG_7943.png',
-                '/uploads/chhaazemblxifcvu_EDITORIAL_1770098471413_IMG_7946.png',
-                '/uploads/gallery_cml4j006v002cgelqj2s8353u_1774360662234_B79FA39A-3E37-47D8-9AC9-A51230198754.jpeg',
-                '/uploads/gallery_cml4j006v002cgelqj2s8353u_1774360690045_3EFDC916-608E-45A0-BA89-6F1370B025C3.jpeg'
+                '/uploads/chhaazemblxifcvu_PROFILE_1770098445420_IMG_7942.jpeg',
+                '/uploads/chhaazemblxifcvu_FULL_BODY_1770098469155_IMG_7948.png',
+                '/uploads/chhaazemblxifcvu_EDITORIAL_1770098471020_IMG_7949.jpeg',
+                '/uploads/gallery_cml66yj17000vge7c2ck2ewsk_1774845879817_IMG_7038.jpeg',
+                '/uploads/gallery_cml66yj17000vge7c2ck2ewsk_1774845891622_IMG_7041.jpeg',
+                '/uploads/gallery_cml66yj17000vge7c2ck2ewsk_1776428334422_IMG_9439.jpeg'
             ]
         ],
         [
