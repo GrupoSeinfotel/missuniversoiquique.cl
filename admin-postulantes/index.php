@@ -61,9 +61,9 @@ if (isset($_GET['export']) && isset($_SESSION['admin_logged'])) {
     header('Content-Disposition: attachment; filename=postulantes_miss_universo_2027_' . date('Y-m-d') . '.csv');
     $output = fopen('php://output', 'w');
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
-    fputcsv($output, ['ID', 'Sede', 'Nombres', 'Apellidos', 'Edad', 'WhatsApp', 'Email', 'Instagram', 'Estatura', 'Comuna', 'Ocupación', 'Estado', 'Fecha Registro']);
+    fputcsv($output, ['ID', 'Sede', 'Nombres', 'Apellidos', 'Edad', 'WhatsApp', 'Email', 'Instagram', 'Estatura', 'Comuna', 'Ocupación', 'Modalidad Pago', 'Código Embajadora', 'Referida Por', 'Descuento Referidas', 'Monto Final', 'Estado', 'Fecha Registro']);
 
-    $stmt = $pdo->query("SELECT id, sede, nombres, apellidos, edad, telefono_whatsapp, email, instagram, estatura_cm, comuna, ocupacion, estado, created_at FROM postulantes_2027 ORDER BY id DESC");
+    $stmt = $pdo->query("SELECT id, sede, nombres, apellidos, edad, telefono_whatsapp, email, instagram, estatura_cm, comuna, ocupacion, modalidad_pago, codigo_embajadora, referida_por, descuento_referidas, monto_final, estado, created_at FROM postulantes_2027 ORDER BY id DESC");
     while ($row = $stmt->fetch()) {
         fputcsv($output, $row);
     }
@@ -235,6 +235,10 @@ $totalPostulantes = $pdo->query("SELECT COUNT(*) FROM postulantes_2027")->fetchC
 $totalArica = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE sede = 'arica'")->fetchColumn();
 $totalIquique = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE sede = 'iquique'")->fetchColumn();
 $totalPendientes = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE estado = 'pendiente'")->fetchColumn();
+$totalReferidas = 0;
+try {
+    $totalReferidas = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE referida_por IS NOT NULL AND referida_por != ''")->fetchColumn();
+} catch (Throwable $e) {}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -533,7 +537,7 @@ $totalPendientes = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE esta
     <div class="container">
 
         <!-- Métricas -->
-        <div class="stats-grid">
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
             <div class="stat-card">
                 <div class="stat-num"><?= $totalPostulantes ?></div>
                 <div class="stat-label">Total Postulantes</div>
@@ -549,6 +553,10 @@ $totalPendientes = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE esta
             <div class="stat-card">
                 <div class="stat-num" style="color: #25d366"><?= $totalPendientes ?></div>
                 <div class="stat-label">Por Evaluar</div>
+            </div>
+            <div class="stat-card" style="border-color: rgba(212, 175, 55, 0.4);">
+                <div class="stat-num" style="color: #ffd700"><?= $totalReferidas ?></div>
+                <div class="stat-label">Red Embajadoras (Invitadas)</div>
             </div>
         </div>
 
@@ -587,6 +595,8 @@ $totalPendientes = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE esta
                         <th>Postulante</th>
                         <th>Edad / Altura</th>
                         <th>Ciudad</th>
+                        <th>Plan & Pago</th>
+                        <th>Red Embajadora</th>
                         <th>WhatsApp</th>
                         <th>Instagram</th>
                         <th>Estado</th>
@@ -596,7 +606,7 @@ $totalPendientes = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE esta
                 <tbody>
                     <?php if (empty($postulantes)): ?>
                         <tr>
-                            <td colspan="9" style="text-align: center; padding: 40px; color: #888;">
+                            <td colspan="11" style="text-align: center; padding: 40px; color: #888;">
                                 No se encontraron postulaciones con los filtros seleccionados.
                             </td>
                         </tr>
@@ -608,14 +618,26 @@ $totalPendientes = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE esta
                             }
                             $msgWa = urlencode("¡Hola " . $p['nombres'] . "! Te saludamos desde la Dirección Oficial de Miss Universe " . ucfirst($p['sede']) . " 2027. Revisamos tu postulación al certamen y nos gustaría coordinar contigo los próximos pasos.");
                             $waUrl = "https://wa.me/{$cleanPhone}?text={$msgWa}";
+                            
+                            // Formateo de Modalidad de Pago
+                            $planMap = [
+                                'abono_70' => ['txt' => '💎 Abono $70.000', 'color' => '#38bdf8'],
+                                'contado_250' => ['txt' => '⚡ Preventa $250k', 'color' => '#10b981'],
+                                'tres_cuotas' => ['txt' => '💳 3 Cuotas', 'color' => '#fbbf24'],
+                                'programa_embajadora' => ['txt' => '👑 Plan Beca Gratis', 'color' => '#e879f9']
+                            ];
+                            $planInfo = $planMap[$p['modalidad_pago'] ?? ''] ?? ['txt' => htmlspecialchars($p['modalidad_pago'] ?? 'Abono'), 'color' => '#94a3b8'];
+                            
+                            $descuentoAcum = (int)($p['descuento_referidas'] ?? 0);
+                            $montoFinal = (int)($p['monto_final'] ?? 250000);
                         ?>
                         <tr id="row-<?= $p['id'] ?>">
                             <td>
                                 <div style="display: flex; gap: 6px;">
-                                    <?php if ($p['foto_rostro']): ?>
+                                    <?php if (!empty($p['foto_rostro'])): ?>
                                         <img src="/<?= htmlspecialchars($p['foto_rostro']) ?>" class="thumb-img" title="Foto Rostro" onclick="showModalPhoto('/<?= htmlspecialchars($p['foto_rostro']) ?>', '<?= htmlspecialchars($p['nombres'] . ' ' . $p['apellidos']) ?> (Rostro)')">
                                     <?php endif; ?>
-                                    <?php if ($p['foto_cuerpo']): ?>
+                                    <?php if (!empty($p['foto_cuerpo'])): ?>
                                         <img src="/<?= htmlspecialchars($p['foto_cuerpo']) ?>" class="thumb-img" title="Foto Cuerpo" onclick="showModalPhoto('/<?= htmlspecialchars($p['foto_cuerpo']) ?>', '<?= htmlspecialchars($p['nombres'] . ' ' . $p['apellidos']) ?> (Cuerpo Completo)')">
                                     <?php endif; ?>
                                 </div>
@@ -626,14 +648,41 @@ $totalPendientes = $pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE esta
                             <td>
                                 <div style="font-weight: 800; color: #fff; font-size: 0.95rem;"><?= htmlspecialchars($p['nombres'] . ' ' . $p['apellidos']) ?></div>
                                 <div style="font-size: 0.75rem; color: #777; margin-top: 2px;"><?= htmlspecialchars($p['email']) ?></div>
+                                <?php if (!empty($p['codigo_embajadora'])): ?>
+                                    <div style="font-size: 0.72rem; color: #ffd700; font-family: monospace; margin-top: 3px;">
+                                        COD: <?= htmlspecialchars($p['codigo_embajadora']) ?>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <div><strong><?= $p['edad'] ?> años</strong></div>
-                                <div style="font-size: 0.8rem; color: #aaa;"><?= $p['estatura_cm'] ? $p['estatura_cm'] . ' cm' : 'S/I' ?></div>
+                                <div style="font-size: 0.8rem; color: #aaa;"><?= !empty($p['estatura_cm']) ? $p['estatura_cm'] . ' cm' : 'S/I' ?></div>
                             </td>
                             <td>
                                 <div style="color: #bbb;"><?= htmlspecialchars($p['comuna'] ?: ucfirst($p['sede'])) ?></div>
                                 <div style="font-size: 0.75rem; color: #777;"><?= htmlspecialchars($p['ocupacion'] ?: 'S/I') ?></div>
+                            </td>
+                            <td>
+                                <div style="font-size: 0.8rem; font-weight: 800; color: <?= $planInfo['color'] ?>;">
+                                    <?= $planInfo['txt'] ?>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #aaa; margin-top: 2px;">
+                                    Final: <strong>$<?= number_format($montoFinal, 0, ',', '.') ?></strong>
+                                </div>
+                            </td>
+                            <td>
+                                <?php if (!empty($p['referida_por'])): ?>
+                                    <div style="font-size: 0.75rem; color: #ffd700;">
+                                        🎁 Por: <strong><?= htmlspecialchars($p['referida_por']) ?></strong>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if ($descuentoAcum > 0): ?>
+                                    <div style="font-size: 0.75rem; color: #10b981; font-weight: 800; margin-top: 2px;">
+                                        -$<?= number_format($descuentoAcum, 0, ',', '.') ?> (<?= round($descuentoAcum / 50000) ?> amigas)
+                                    </div>
+                                <?php else: ?>
+                                    <span style="font-size: 0.72rem; color: #64748b;">Sin referidas</span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <a href="<?= $waUrl ?>" target="_blank" class="btn-wa">
