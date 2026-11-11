@@ -119,7 +119,6 @@ if (isset($_FILES['foto_cuerpo'])) {
 }
 
 // 4. Validar fecha límite de reclutamiento (25 de Enero 2027)
-// Directriz Oficial Nacional Miss Universe Chile: Elección y confirmación impostergable de candidatas el 1 de Marzo de 2027.
 $fechaActual = new DateTime();
 $fechaCierreReclutamiento = new DateTime('2027-01-25 23:59:59');
 
@@ -127,14 +126,14 @@ if ($fechaActual > $fechaCierreReclutamiento) {
     http_response_code(400);
     echo json_encode([
         'status' => 'error',
-        'message' => 'El período oficial de inscripciones para Miss Universe 2027 finalizó el 25 de Enero de 2027, en estricto cumplimiento con la fecha límite nacional impostergable para la elección de candidatas comunales (1 de Marzo).'
+        'message' => 'El período oficial de inscripciones para Miss Universe 2027 finalizó el 25 de Enero de 2027.'
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 // Tramos Oficiales:
-// 1. Preventa Exclusiva (Noviembre hasta 31 de Diciembre 2026): $250.000
-// 2. Tarifa Regular y Cierre Definitivo (1 de Enero 2027 a 25 de Enero 2027): $350.000
+// 1. Preventa Exclusiva (Hasta el 31 de Diciembre 2026): $250.000
+// 2. Tarifa Regular (Hasta el 25 de Enero 2027): $350.000
 $anioActual = (int)$fechaActual->format('Y');
 
 $tramoTarifa = 'diciembre_250';

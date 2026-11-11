@@ -625,7 +625,7 @@ try {
                                 'contado_250' => ['txt' => '⚡ Preventa $250k', 'color' => '#10b981'],
                                 'contado_350' => ['txt' => '⚡ Regular $350k', 'color' => '#f59e0b'],
                                 'tres_cuotas' => ['txt' => '💳 3 Cuotas', 'color' => '#fbbf24'],
-                                'programa_embajadora' => ['txt' => '👑 Plan Beca Gratis', 'color' => '#e879f9']
+                                'programa_embajadora' => ['txt' => '👑 Embajadora ($70k Reembolsable)', 'color' => '#e879f9']
                             ];
                             $planInfo = $planMap[$p['modalidad_pago'] ?? ''] ?? ['txt' => htmlspecialchars($p['modalidad_pago'] ?? 'Abono'), 'color' => '#94a3b8'];
                             

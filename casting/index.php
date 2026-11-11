@@ -242,59 +242,44 @@ $refCode = trim($_GET['ref'] ?? '');
         }
 
         /* ==============================================================
-           AVISO OFICIAL PLAZO NACIONAL & TRAMOS DE PROMOCIÓN
+           GARANTÍA PLAN EMBAJADORAS & TRAMOS DE PROMOCIÓN
            ============================================================== */
-        .official-notice-box {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(212, 175, 55, 0.12));
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            border-left: 5px solid #ef4444;
-            border-radius: 18px;
-            padding: 20px 22px;
-            margin-bottom: 26px;
+        .activation-guarantee-box {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-left: 4px solid #10b981;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 22px;
             display: flex;
             align-items: flex-start;
-            gap: 16px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+            gap: 14px;
+            text-align: left;
+            backdrop-filter: blur(10px);
         }
 
-        .notice-icon {
-            font-size: 2.2rem;
+        .guarantee-icon {
+            font-size: 1.8rem;
             line-height: 1;
             flex-shrink: 0;
         }
 
-        .notice-badge {
-            display: inline-block;
-            background: rgba(239, 68, 68, 0.25);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.5);
-            font-size: 0.68rem;
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            padding: 3px 10px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            margin-bottom: 6px;
+        .guarantee-content strong {
+            color: #6ee7b7;
+            font-size: 0.95rem;
+            display: block;
+            margin-bottom: 4px;
         }
 
-        .notice-title {
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 5px;
-            font-family: var(--font-serif);
-            letter-spacing: 0.5px;
-        }
-
-        .notice-desc {
-            font-size: 0.88rem;
+        .guarantee-content p {
             color: #cbd5e1;
-            line-height: 1.55;
+            font-size: 0.85rem;
+            line-height: 1.45;
             margin: 0;
         }
 
-        .notice-desc strong {
+        .guarantee-content p strong {
+            display: inline;
             color: #fef08a;
         }
 
@@ -1103,26 +1088,10 @@ $refCode = trim($_GET['ref'] ?? '');
             <h1 class="hero-title">Casting Oficial 2027</h1>
             <div class="hero-calligraphy">La corona de <?= $regionNombre ?> te espera</div>
             <p class="hero-desc">
-                Comienza la búsqueda de la mujer que llevará la banda regional rumbo a Miss Universe Chile. 
-                Por directriz oficial, la fecha límite e impostergable para confirmar a las representantes comunales es el <strong>1 de Marzo de 2027</strong>. 
-                Por ello, nuestro proceso de reclutamiento cerrará definitivamente el <strong>25 de Enero de 2027</strong>.
-                Aprovecha la Preventa Exclusiva hasta el 31 de Diciembre con facilidades en cuotas o participa completamente gratis con nuestro 
-                <strong>Programa de Embajadoras</strong>.
+                Comienza la búsqueda de la mujer que llevará la banda de nuestra región rumbo a Miss Universe. 
+                Aprovecha la Preventa de Lanzamiento hasta el 31 de Diciembre con facilidades en cuotas, 
+                o participa con nuestro <strong>Programa de Embajadoras</strong> con devolución total de tu abono al sumar 5 amigas.
             </p>
-        </div>
-
-        <!-- ==============================================================
-             AVISO OFICIAL: DIRECTRIZ NACIONAL MISS UNIVERSE CHILE
-             ============================================================== -->
-        <div class="official-notice-box">
-            <div class="notice-icon">👑</div>
-            <div class="notice-content">
-                <div class="notice-badge">DIRECTRIZ OFICIAL NACIONAL · MISS UNIVERSE CHILE</div>
-                <h3 class="notice-title">Plazo Improrrogable: Elección de Candidatas al 1 de Marzo de 2027</h3>
-                <p class="notice-desc">
-                    Por instrucción de la Dirección Nacional, la fecha límite e impostergable para elegir y confirmar a las representantes comunales es el <strong>1 de Marzo de 2027</strong>, sin excepciones. Con el fin de coordinar ensayos, fotografía y preparación oficial de alto estándar, <strong>la fecha máxima de reclutamiento e inscripciones será el 25 de Enero de 2027</strong>.
-                </p>
-            </div>
         </div>
 
         <!-- ==============================================================
@@ -1130,8 +1099,8 @@ $refCode = trim($_GET['ref'] ?? '');
              ============================================================== -->
         <section class="pricing-section">
             <div class="pricing-header">
-                <h2>Tramos de Inscripción & <span>Plazos Oficiales</span></h2>
-                <p>Asegura tu participación antes del cierre definitivo de convocatoria el 25 de Enero</p>
+                <h2>Tramos de Inscripción & <span>Preventa Exclusiva</span></h2>
+                <p>Asegura tu cupo con tarifa anticipada antes del cierre oficial de postulaciones</p>
             </div>
 
             <div class="tiers-grid">
@@ -1140,7 +1109,7 @@ $refCode = trim($_GET['ref'] ?? '');
                     <?php if ($esPreventa): ?>
                         <span class="tier-badge">🔥 TARIFA MÍNIMA PREVENTA (ACTIVA)</span>
                     <?php endif; ?>
-                    <div class="tier-period">Todo Noviembre hasta 31 Diciembre 2026</div>
+                    <div class="tier-period">Hasta el 31 de Diciembre 2026</div>
                     <div class="tier-price">$250.000</div>
                     <div class="tier-save">Ahorras $100.000 CLP</div>
                     <div class="tier-terms">Congela tu cupo con abono inicial desde $70.000 o paga hasta en 3 cuotas.</div>
@@ -1149,14 +1118,14 @@ $refCode = trim($_GET['ref'] ?? '');
                 <!-- Tramo 2: Enero (Cierre Definitivo) -->
                 <div class="tier-card <?= !$esPreventa ? 'highlight' : '' ?>">
                     <?php if (!$esPreventa): ?>
-                        <span class="tier-badge">⚡ ÚLTIMOS DÍAS DE CASTING</span>
+                        <span class="tier-badge">⚡ CIERRE DE CONVOCATORIA</span>
                     <?php else: ?>
-                        <span class="tier-badge" style="background:#334155; color:#cbd5e1; border:1px solid rgba(255,255,255,0.1);">PRÓXIMO TRAMO</span>
+                        <span class="tier-badge" style="background:#334155; color:#cbd5e1; border:1px solid rgba(255,255,255,0.1);">TARIFA REGULAR</span>
                     <?php endif; ?>
-                    <div class="tier-period">Del 1 al 25 de Enero 2027</div>
+                    <div class="tier-period">Hasta el 25 de Enero 2027</div>
                     <div class="tier-price">$350.000</div>
-                    <div style="font-size:0.75rem; color:#ef4444; font-weight:700; margin-top:4px;">⚠️ CIERRE DEFINITIVO E IMPOSTERGABLE</div>
-                    <div class="tier-terms">Últimas postulaciones previas al plazo nacional de elección de candidatas.</div>
+                    <div style="font-size:0.75rem; color:#f59e0b; font-weight:700; margin-top:4px;">Cierre Final de Inscripciones</div>
+                    <div class="tier-terms">Últimas postulaciones previas al cierre oficial de la convocatoria.</div>
                 </div>
             </div>
 
@@ -1187,6 +1156,19 @@ $refCode = trim($_GET['ref'] ?? '');
                 </p>
             </div>
 
+            <!-- Garantía y Abono del Plan Embajadora -->
+            <div class="activation-guarantee-box">
+                <div class="guarantee-icon">🛡️</div>
+                <div class="guarantee-content">
+                    <strong>¿Cómo funciona el Plan Embajadora con Devolución de Dinero?</strong>
+                    <p>
+                        Para asegurar tu cupo y activar tu Código Oficial de Embajadora, realizas un <strong>abono inicial de reserva de $70.000</strong>. 
+                        Comienzas a invitar a tus amigas y por cada una descuentas $50.000. 
+                        <strong>¡Al lograr tus 5 candidatas referidas, tu participación es costo CERO ($0) y la organización te devuelve íntegramente tu abono de $70.000!</strong>
+                    </p>
+                </div>
+            </div>
+
             <!-- Simulador Interactivo de Beca -->
             <div class="simulator-box">
                 <div class="simulator-label">✨ Simulador de Descuento por Amigas Invitadas ✨</div>
@@ -1196,9 +1178,9 @@ $refCode = trim($_GET['ref'] ?? '');
                     <button type="button" class="btn-amiga" onclick="setSimulacion(2, this)">2 Amigas (-$100k)</button>
                     <button type="button" class="btn-amiga" onclick="setSimulacion(3, this)">3 Amigas (-$150k)</button>
                     <button type="button" class="btn-amiga" onclick="setSimulacion(4, this)">4 Amigas (-$200k)</button>
-                    <button type="button" class="btn-amiga" onclick="setSimulacion(5, this)">👑 5 Amigas (<?= $esPreventa ? '¡100% GRATIS!' : '-$250k' ?>)</button>
+                    <button type="button" class="btn-amiga" onclick="setSimulacion(5, this)">👑 5 Amigas (¡Devolución de $70k!)</button>
                     <?php if (!$esPreventa): ?>
-                    <button type="button" class="btn-amiga" onclick="setSimulacion(7, this)">👑 7 Amigas (¡100% GRATIS!)</button>
+                    <button type="button" class="btn-amiga" onclick="setSimulacion(7, this)">👑 7 Amigas (¡Devolución de $70k!)</button>
                     <?php endif; ?>
                 </div>
 
@@ -1210,7 +1192,7 @@ $refCode = trim($_GET['ref'] ?? '');
                     <div class="calc-box-item">
                         <small>Tu Valor Final a Pagar (<?= $periodoActualTxt ?>)</small>
                         <div class="calc-val-final" id="simFinal">$<?= number_format($tarifaBaseActual, 0, ',', '.') ?> CLP</div>
-                        <div id="simBadgeFree" style="display:none;" class="calc-free-pill">👑 ¡PARTICIPAS 100% GRATIS!</div>
+                        <div id="simBadgeFree" style="display:none;" class="calc-free-pill">👑 ¡GRATIS! SE TE REEMBOLSA EL 100% DE TU ABONO</div>
                     </div>
                 </div>
             </div>
@@ -1433,7 +1415,8 @@ $refCode = trim($_GET['ref'] ?? '');
                 <div class="referral-code-display" id="modalRefCode">MU-<?= ($isIquique ? 'IQ' : 'AR') ?>-2027</div>
                 <div style="font-size:0.8rem; color:#f1f5f9; line-height:1.4;">
                     ¡Comparte este código o tu enlace con tus amigas! <br>
-                    <strong>Te descontaremos $50.000 por cada una que postule</strong>, y si sumas a 5 amigas, ¡tu cupo es 100% GRATIS!
+                    <strong>Te descontaremos $50.000 por cada una que postule</strong>. <br>
+                    Inicias asegurando tu cupo con el abono de $70.000 y al conseguir a tus 5 candidatas, <strong>¡se te devuelve el 100% de tu dinero!</strong>
                 </div>
             </div>
 
