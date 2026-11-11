@@ -623,6 +623,7 @@ try {
                             $planMap = [
                                 'abono_70' => ['txt' => '💎 Abono $70.000', 'color' => '#38bdf8'],
                                 'contado_250' => ['txt' => '⚡ Preventa $250k', 'color' => '#10b981'],
+                                'contado_350' => ['txt' => '⚡ Regular $350k', 'color' => '#f59e0b'],
                                 'tres_cuotas' => ['txt' => '💳 3 Cuotas', 'color' => '#fbbf24'],
                                 'programa_embajadora' => ['txt' => '👑 Plan Beca Gratis', 'color' => '#e879f9']
                             ];

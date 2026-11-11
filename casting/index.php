@@ -19,6 +19,12 @@ $colorAcento = '#f5245f';
 $colorDorado = '#d4af37';
 $whatsappHelp = '+56956762116';
 
+// Cálculo de estado de fechas y tarifas
+$now = new DateTime();
+$esPreventa = ($now < new DateTime('2027-01-01 00:00:00'));
+$tarifaBaseActual = $esPreventa ? 250000 : 350000;
+$periodoActualTxt = $esPreventa ? 'Preventa Diciembre' : 'Tarifa Enero';
+
 // Código de referida si viene en la URL (?ref=CODIGO)
 $refCode = trim($_GET['ref'] ?? '');
 ?>
@@ -236,8 +242,62 @@ $refCode = trim($_GET['ref'] ?? '');
         }
 
         /* ==============================================================
-           TARJETAS DE PRECIOS & TRAMOS DE PROMOCIÓN
+           AVISO OFICIAL PLAZO NACIONAL & TRAMOS DE PROMOCIÓN
            ============================================================== */
+        .official-notice-box {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(212, 175, 55, 0.12));
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-left: 5px solid #ef4444;
+            border-radius: 18px;
+            padding: 20px 22px;
+            margin-bottom: 26px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .notice-icon {
+            font-size: 2.2rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .notice-badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .notice-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 5px;
+            font-family: var(--font-serif);
+            letter-spacing: 0.5px;
+        }
+
+        .notice-desc {
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            line-height: 1.55;
+            margin: 0;
+        }
+
+        .notice-desc strong {
+            color: #fef08a;
+        }
+
         .pricing-section {
             background: rgba(8, 16, 42, 0.75);
             border: 1.5px solid var(--border-gold);
@@ -273,8 +333,8 @@ $refCode = trim($_GET['ref'] ?? '');
 
         .tiers-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
             margin-bottom: 20px;
         }
 
@@ -1044,9 +1104,25 @@ $refCode = trim($_GET['ref'] ?? '');
             <div class="hero-calligraphy">La corona de <?= $regionNombre ?> te espera</div>
             <p class="hero-desc">
                 Comienza la búsqueda de la mujer que llevará la banda regional rumbo a Miss Universe Chile. 
-                Aprovecha la preventa exclusiva de lanzamiento con facilidades de pago en cuotas y nuestro 
-                <strong>Programa de Embajadoras</strong> para participar completamente gratis.
+                Por directriz oficial, la fecha límite e impostergable para confirmar a las representantes comunales es el <strong>1 de Marzo de 2027</strong>. 
+                Por ello, nuestro proceso de reclutamiento cerrará definitivamente el <strong>25 de Enero de 2027</strong>.
+                Aprovecha la Preventa Exclusiva hasta el 31 de Diciembre con facilidades en cuotas o participa completamente gratis con nuestro 
+                <strong>Programa de Embajadoras</strong>.
             </p>
+        </div>
+
+        <!-- ==============================================================
+             AVISO OFICIAL: DIRECTRIZ NACIONAL MISS UNIVERSE CHILE
+             ============================================================== -->
+        <div class="official-notice-box">
+            <div class="notice-icon">👑</div>
+            <div class="notice-content">
+                <div class="notice-badge">DIRECTRIZ OFICIAL NACIONAL · MISS UNIVERSE CHILE</div>
+                <h3 class="notice-title">Plazo Improrrogable: Elección de Candidatas al 1 de Marzo de 2027</h3>
+                <p class="notice-desc">
+                    Por instrucción de la Dirección Nacional, la fecha límite e impostergable para elegir y confirmar a las representantes comunales es el <strong>1 de Marzo de 2027</strong>, sin excepciones. Con el fin de coordinar ensayos, fotografía y preparación oficial de alto estándar, <strong>la fecha máxima de reclutamiento e inscripciones será el 25 de Enero de 2027</strong>.
+                </p>
+            </div>
         </div>
 
         <!-- ==============================================================
@@ -1054,34 +1130,33 @@ $refCode = trim($_GET['ref'] ?? '');
              ============================================================== -->
         <section class="pricing-section">
             <div class="pricing-header">
-                <h2>Tramos de Inscripción & <span>Preventa Exclusiva</span></h2>
-                <p>Asegura tu cupo con tarifa anticipada y congela el mejor valor de la temporada</p>
+                <h2>Tramos de Inscripción & <span>Plazos Oficiales</span></h2>
+                <p>Asegura tu participación antes del cierre definitivo de convocatoria el 25 de Enero</p>
             </div>
 
             <div class="tiers-grid">
                 <!-- Tramo 1: Preventa Diciembre -->
-                <div class="tier-card highlight">
-                    <span class="tier-badge">🔥 TARIFA MÍNIMA PREVENTA</span>
-                    <div class="tier-period">Ahora y todo Diciembre 2026</div>
+                <div class="tier-card <?= $esPreventa ? 'highlight' : '' ?>">
+                    <?php if ($esPreventa): ?>
+                        <span class="tier-badge">🔥 TARIFA MÍNIMA PREVENTA (ACTIVA)</span>
+                    <?php endif; ?>
+                    <div class="tier-period">Todo Noviembre hasta 31 Diciembre 2026</div>
                     <div class="tier-price">$250.000</div>
                     <div class="tier-save">Ahorras $100.000 CLP</div>
-                    <div class="tier-terms">Abono inicial desde $70.000 para congelar precio o hasta 3 cuotas.</div>
+                    <div class="tier-terms">Congela tu cupo con abono inicial desde $70.000 o paga hasta en 3 cuotas.</div>
                 </div>
 
-                <!-- Tramo 2: Enero -->
-                <div class="tier-card">
-                    <div class="tier-period">Todo Enero 2027</div>
-                    <div class="tier-price">$300.000</div>
-                    <div class="tier-save" style="color:var(--accent-gold);">Ahorras $50.000 CLP</div>
-                    <div class="tier-terms">Tarifa regular del certamen con facilidades de pago.</div>
-                </div>
-
-                <!-- Tramo 3: Febrero -->
-                <div class="tier-card">
-                    <div class="tier-period">Hasta finales de Febrero 2027</div>
+                <!-- Tramo 2: Enero (Cierre Definitivo) -->
+                <div class="tier-card <?= !$esPreventa ? 'highlight' : '' ?>">
+                    <?php if (!$esPreventa): ?>
+                        <span class="tier-badge">⚡ ÚLTIMOS DÍAS DE CASTING</span>
+                    <?php else: ?>
+                        <span class="tier-badge" style="background:#334155; color:#cbd5e1; border:1px solid rgba(255,255,255,0.1);">PRÓXIMO TRAMO</span>
+                    <?php endif; ?>
+                    <div class="tier-period">Del 1 al 25 de Enero 2027</div>
                     <div class="tier-price">$350.000</div>
-                    <div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">Tarifa Final de Cierre</div>
-                    <div class="tier-terms">Últimas plazas disponibles previas al inicio de ensayos.</div>
+                    <div style="font-size:0.75rem; color:#ef4444; font-weight:700; margin-top:4px;">⚠️ CIERRE DEFINITIVO E IMPOSTERGABLE</div>
+                    <div class="tier-terms">Últimas postulaciones previas al plazo nacional de elección de candidatas.</div>
                 </div>
             </div>
 
@@ -1121,7 +1196,10 @@ $refCode = trim($_GET['ref'] ?? '');
                     <button type="button" class="btn-amiga" onclick="setSimulacion(2, this)">2 Amigas (-$100k)</button>
                     <button type="button" class="btn-amiga" onclick="setSimulacion(3, this)">3 Amigas (-$150k)</button>
                     <button type="button" class="btn-amiga" onclick="setSimulacion(4, this)">4 Amigas (-$200k)</button>
-                    <button type="button" class="btn-amiga" onclick="setSimulacion(5, this)">👑 5 Amigas (¡GRATIS!)</button>
+                    <button type="button" class="btn-amiga" onclick="setSimulacion(5, this)">👑 5 Amigas (<?= $esPreventa ? '¡100% GRATIS!' : '-$250k' ?>)</button>
+                    <?php if (!$esPreventa): ?>
+                    <button type="button" class="btn-amiga" onclick="setSimulacion(7, this)">👑 7 Amigas (¡100% GRATIS!)</button>
+                    <?php endif; ?>
                 </div>
 
                 <div class="calc-result-wrap">
@@ -1130,8 +1208,8 @@ $refCode = trim($_GET['ref'] ?? '');
                         <div class="calc-val-discount" id="simDiscount">$0 CLP</div>
                     </div>
                     <div class="calc-box-item">
-                        <small>Tu Valor Final a Pagar (Preventa Diciembre)</small>
-                        <div class="calc-val-final" id="simFinal">$250.000 CLP</div>
+                        <small>Tu Valor Final a Pagar (<?= $periodoActualTxt ?>)</small>
+                        <div class="calc-val-final" id="simFinal">$<?= number_format($tarifaBaseActual, 0, ',', '.') ?> CLP</div>
                         <div id="simBadgeFree" style="display:none;" class="calc-free-pill">👑 ¡PARTICIPAS 100% GRATIS!</div>
                     </div>
                 </div>
@@ -1271,10 +1349,10 @@ $refCode = trim($_GET['ref'] ?? '');
                     </label>
 
                     <label class="payment-radio-label">
-                        <input type="radio" name="modalidad_pago" value="contado_250">
+                        <input type="radio" name="modalidad_pago" value="<?= $esPreventa ? 'contado_250' : 'contado_350' ?>">
                         <div class="radio-info">
-                            <strong>⚡ Preventa Diciembre ($250.000)</strong>
-                            <small>Pago total al contado con el máximo descuento de lanzamiento ($100.000 de ahorro).</small>
+                            <strong>⚡ Pago Contado (<?= $esPreventa ? 'Preventa $250.000' : 'Tarifa $350.000' ?>)</strong>
+                            <small><?= $esPreventa ? 'Pago al contado con $100.000 de ahorro en preventa (hasta el 31 de Diciembre).' : 'Pago total antes del cierre definitivo del 25 de Enero.' ?></small>
                         </div>
                     </label>
 
@@ -1282,15 +1360,15 @@ $refCode = trim($_GET['ref'] ?? '');
                         <input type="radio" name="modalidad_pago" value="tres_cuotas">
                         <div class="radio-info">
                             <strong>💳 Pago en 3 Cuotas</strong>
-                            <small>Cuotas mensuales flexibles hasta antes de la Gran Gala Final.</small>
+                            <small>Cuotas mensuales flexibles durante tu preparación al certamen.</small>
                         </div>
                     </label>
 
                     <label class="payment-radio-label">
                         <input type="radio" name="modalidad_pago" value="programa_embajadora">
                         <div class="radio-info">
-                            <strong>👑 Plan Embajadora (Meta Gratis)</strong>
-                            <small>Invitaré a 5 amigas al certamen para que mi participación sea 100% gratuita.</small>
+                            <strong>👑 Plan Embajadora (Meta Beca 100% Gratis)</strong>
+                            <small>Invitaré a mis amigas al certamen (-$50.000 por cada una) para participar costo cero.</small>
                         </div>
                     </label>
                 </div>
@@ -1386,7 +1464,7 @@ $refCode = trim($_GET['ref'] ?? '');
     <!-- Scripts Interactivos -->
     <script>
         // Simulador Interactivo de Beca y Descuento
-        const basePrice = 250000;
+        const basePrice = <?= (int)$tarifaBaseActual ?>;
         function setSimulacion(amigas, btn) {
             document.querySelectorAll('.btn-amiga').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
