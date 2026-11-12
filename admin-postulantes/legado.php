@@ -12,6 +12,8 @@ if (!isset($_SESSION['admin_logged'])) {
     exit;
 }
 
+require_once __DIR__ . '/../2026/mailbox.php';
+
 // Función para enviar correo oficial de invitación
 function enviarInvitacionLegado($candidata) {
     $sede = $candidata['sede'];
@@ -20,7 +22,7 @@ function enviarInvitacionLegado($candidata) {
     $magicUrl = "https://missuniverso{$sede}.cl/2026/editar.php?token=" . $candidata['magic_token'];
     $linktreeUrl = "https://missuniverso{$sede}.cl/2026/#" . $candidata['username'];
     $editorialUrl = "https://missuniverso{$sede}.cl/2026/" . $candidata['username'];
-    $instEmail = "{$candidata['username']}@2026.missuniverso{$sede}.cl";
+    $instEmail = 'Activación desde tu panel, cuando el servicio esté disponible';
 
     $subject = "👑 Tu Nueva Identidad Digital y Salón del Legado · Miss Universo {$sedeTitle}";
 
@@ -63,7 +65,7 @@ function enviarInvitacionLegado($candidata) {
                     <ul class='feature-list' style='margin:0;'>
                         <li><strong>Tu Bio-Link Oficial (Linktree):</strong> <code>{$linktreeUrl}</code> <br><span style='font-size:12px; color:#94a3b8;'>Ideal para colocar en la biografía de tu Instagram o TikTok, con enlaces directos a tus redes y proyectos.</span></li>
                         <li><strong>Tu Portafolio Editorial:</strong> <code>{$editorialUrl}</code> <br><span style='font-size:12px; color:#94a3b8;'>Página completa tipo revista con tu biografía y sesión fotográfica oficial.</span></li>
-                        <li><strong>Tu Correo Institucional:</strong> <code>{$instEmail}</code> <br><span style='font-size:12px; color:#94a3b8;'>Correo institucional oficial que redirige directo a tu casilla personal ({$candidata['email_personal']}).</span></li>
+                        <li><strong>Tu Correo Institucional:</strong> <code>{$instEmail}</code> <br><span style='font-size:12px; color:#94a3b8;'>Elige tu usuario y contraseña al activar tu casilla para enviar y recibir. No es un reenvío a tu correo personal.</span></li>
                     </ul>
                 </div>
 
@@ -463,7 +465,7 @@ $totalEnviados = $pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE email_sent_
             <span>👑</span>
             <span>Miss Universe · Salón del Legado 2026</span>
         </div>
-        <div class="header-actions">
+        <div class="header-actions"><a href="accesos-legado.php" class="btn-nav">Accesos de superadministrador ↗</a>
             <a href="index.php" class="btn-nav">📋 Postulantes 2027</a>
             <a href="slider.php" class="btn-nav">🖼️ Hero Slider</a>
             <a href="legado.php" class="btn-nav active">👑 Legado 2026</a>
@@ -538,7 +540,8 @@ $totalEnviados = $pdo->query("SELECT COUNT(*) FROM legado_2026 WHERE email_sent_
                     <?php else: ?>
                     <?php foreach ($candidatas as $c): 
                         $instDomain = "2026.missuniverso{$c['sede']}.cl";
-                        $instEmail = "{$c['username']}@{$instDomain}";
+                        $mailState=legado_mail_status($pdo,(string)$c['id']);
+                        $instEmail=$mailState&&$mailState['status']==='active'?$mailState['address']:'Casilla pendiente de activación';
                         $magicUrl = "https://missuniverso{$c['sede']}.cl/2026/editar.php?token={$c['magic_token']}";
                         $pubEditorial = "https://missuniverso{$c['sede']}.cl/2026/{$c['username']}";
                         $pubLinktree = "https://missuniverso{$c['sede']}.cl/2026/#{$c['username']}";
