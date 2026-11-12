@@ -7,14 +7,13 @@
  * 2. Perfil Editorial de Alta Costura (/2026/usuario) con Teatro de Video de Pasarela y Portafolio.
  * 3. VIP Bio-Link Linktree (/2026/#usuario o ?view=linktree).
  */
-require_once __DIR__ . '/../config/db.php';
+require_once (getenv('LEGADO_DB_CONFIG') ?: __DIR__ . '/../config/db.php');
+require_once __DIR__ . '/mailbox.php';
+require_once __DIR__.'/profile.php';
 
 // Detectar sede
 $host = $_SERVER['HTTP_HOST'] ?? '';
 $sede = (strpos($host, 'iquique') !== false) ? 'iquique' : 'arica';
-if (isset($_GET['sede']) && in_array(strtolower($_GET['sede']), ['arica', 'iquique'])) {
-    $sede = strtolower($_GET['sede']);
-}
 
 $sedeTitle = ($sede === 'arica') ? 'Arica' : 'Iquique';
 $sedeColor = ($sede === 'arica') ? '#f5245f' : '#b930d5';
@@ -35,12 +34,7 @@ if (!empty($requestedUser)) {
     $stmt->execute([$sede, $requestedUser]);
     $candidate = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$candidate) {
-        // Fallback entre sedes si compartieron el enlace cruzado
-        $stmt2 = $pdo->prepare("SELECT * FROM legado_2026 WHERE username = ? LIMIT 1");
-        $stmt2->execute([$requestedUser]);
-        $candidate = $stmt2->fetch(PDO::FETCH_ASSOC);
-    }
+
 }
 
 // Modo vista linktree si viene por GET o si la candidata solo activó linktree
@@ -48,8 +42,10 @@ $viewMode = $_GET['view'] ?? '';
 $isLinktreeView = ($viewMode === 'linktree') || (!empty($candidate) && !$candidate['mode_editorial'] && $candidate['mode_linktree']);
 
 // Obtener todas las candidatas para el salón interactivo
-$stmtAll = $pdo->query("SELECT id, sede, username, full_name, title_badge, photo_main, photos_gallery, videos_gallery, occupation, bio, inst_email, custom_links, mode_editorial, mode_linktree, is_minimal_record FROM legado_2026 ORDER BY sede DESC, id ASC");
+$stmtAll = $pdo->query("SELECT id, sede, username, full_name, title_badge, photo_main, photos_gallery, videos_gallery, occupation, bio, inst_email, custom_links, mode_editorial, mode_linktree, is_minimal_record FROM legado_2026 WHERE sede = '$sede' ORDER BY id ASC");
 $allCandidates = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
+$allCandidates = array_map(fn($row)=>legado_public_record(legado_media_public(legado_mail_public($pdo,$row))),$allCandidates);
+if($candidate)$candidate=legado_public_record(legado_media_public(legado_mail_public($pdo,$candidate)));
 
 // Conteos y Candidatas con Video
 $countTotal = count($allCandidates);
@@ -69,15 +65,17 @@ foreach ($allCandidates as $candItem) {
     }
 }
 $countWithVideos = count($candidatesWithVideos);
+if(!$candidate && $requestedUser===''){require __DIR__.'/home-2026.php';exit;}
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title><?= $candidate ? htmlspecialchars($candidate['full_name']) . " · Salón del Legado 2026 · Miss Universo {$sedeTitle}" : "Salón del Legado 2026 · Miss Universo {$sedeTitle} & Arica" ?></title>
+    <title><?= $candidate ? htmlspecialchars($candidate['full_name']) . " · Salón del Legado 2026 · Miss Universo {$sedeTitle}" : "Legado 2026 · Miss Universo {$sedeTitle}" ?></title>
     
-    <meta name="description" content="<?= $candidate ? htmlspecialchars($candidate['bio'] ?? "Perfil oficial de {$candidate['full_name']}, Embajadora de Miss Universo {$sedeTitle} 2026.") : "Homenaje oficial a las embajadoras de Miss Universo 2026. Portafolios de alta costura, reels de pasarela y Bio-Links oficiales verificados." ?>">
+    <meta name="description" content="<?= $candidate ? htmlspecialchars($candidate['bio'] ?? "Perfil oficial de {$candidate['full_name']}, Embajadora de Miss Universo {$sedeTitle} 2026.") : "El archivo de la edición 2026: candidatas, fotografías e historias en video." ?>">
     <meta name="theme-color" content="#010619">
     
     <?php if ($candidate && !empty($candidate['photo_main'])): ?>
@@ -1380,8 +1378,10 @@ $countWithVideos = count($candidatesWithVideos);
             font-weight: 700;
         }
     </style>
+<link rel="stylesheet" href="/2026/legado.css?v=20261022-portfolio4">
+<link rel="stylesheet" href="/2026/vip.css?v=20261022-jewels2"><?php if($candidate): ?><script src="/2026/vip.js?v=20261022-jewels2" defer></script><?php else: ?><link rel="stylesheet" href="/2026/archive-vip.css?v=20261022-emblem2"><?php endif; ?>
 </head>
-<body>
+<body class="<?= $candidate ? 'vip-neon' : 'vip-neon archive-neon' ?>" data-vip-city="<?= $sede ?>">
 
     <!-- Fondo Cósmico y Lienzo de Partículas -->
     <div class="cosmic-aurora"></div>
@@ -1390,10 +1390,10 @@ $countWithVideos = count($candidatesWithVideos);
     <!-- Navegación Superior -->
     <header class="legado-header">
         <a href="/2026/?sede=<?= $sede ?>" class="brand-pill">
-            <span class="brand-crown">👑</span>
+            <img class="brand-logo" src="/2026/correo/assets/logo-<?= $sede ?>.png" alt="Miss Universo">
             <div class="brand-text">
-                <span class="brand-title">Miss Universe <b>Chile</b></span>
-                <span class="brand-sub">✧ Salón del Legado 2026 ✧</span>
+                <span class="brand-title">Miss Universo <b><?= $sedeTitle ?></b></span>
+                <span class="brand-sub">Archivo · Edición 2026</span>
             </div>
         </a>
 
@@ -1401,7 +1401,7 @@ $countWithVideos = count($candidatesWithVideos);
             <?php if ($candidate): ?>
                 <a href="/2026/?sede=<?= $candidate['sede'] ?>" class="btn-header">← Salón General</a>
             <?php else: ?>
-                <a href="/2027/" class="btn-header">Edición 2027 ↗</a>
+                <a href="/" class="btn-header">Edición 2027 ↗</a>
             <?php endif; ?>
             <a href="/2026/editar.php" class="btn-header btn-header-active">Acceso Embajadoras</a>
         </div>
@@ -1421,100 +1421,7 @@ $countWithVideos = count($candidatesWithVideos);
     <!-- ==============================================================
          VISTA 1: PERFIL EDITORIAL DE ALTA COSTURA (/2026/usuario)
          ============================================================== -->
-    <main class="editorial-wrapper">
-        <div class="editorial-back-nav">
-            <a href="/2026/?sede=<?= $candidate['sede'] ?>" class="btn-back-salon">← Volver al Salón del Legado (<?= strtoupper($candidate['sede']) ?>)</a>
-        </div>
-
-        <div class="glass editorial-hero-grid">
-            <div class="portrait-frame-box">
-                <img src="<?= htmlspecialchars($candidate['photo_main']) ?>" alt="<?= htmlspecialchars($candidate['full_name']) ?>">
-                <div class="portrait-sash">MISSU 2026 · <?= strtoupper($candidate['sede']) ?></div>
-            </div>
-
-            <div class="editorial-info-box">
-                <div class="editorial-badge">
-                    <span>👑</span>
-                    <span><?= htmlspecialchars($candidate['title_badge'] ?? 'Embajadora Oficial 2026') ?> · Miss Universo <?= ucfirst($candidate['sede']) ?></span>
-                </div>
-
-                <h1 class="editorial-name"><?= htmlspecialchars($candidate['full_name']) ?></h1>
-                <div class="editorial-script-subtitle">Elegancia, Belleza & Liderazgo</div>
-                <div class="editorial-occ">✨ <?= htmlspecialchars($candidate['occupation'] ?? 'Modelo & Figura Pública') ?></div>
-
-                <div class="editorial-quote">
-                    "<?= htmlspecialchars($candidate['bio'] ?? 'Representar a nuestra región en Miss Universo es un honor imborrable que preservamos como parte viva de nuestra historia y cultura.') ?>"
-                </div>
-
-                <!-- Correo Institucional Oficial -->
-                <?php if (!empty($candidate['inst_email'])): ?>
-                <div class="inst-email-banner">
-                    <div class="inst-email-text">
-                        <small>📩 Correo Oficial Institucional</small>
-                        <span><?= htmlspecialchars($candidate['inst_email']) ?></span>
-                    </div>
-                    <button type="button" class="btn-copy-gold" onclick="copyText('<?= htmlspecialchars($candidate['inst_email']) ?>', this);">Copiar Correo</button>
-                </div>
-                <?php endif; ?>
-
-                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:10px;">
-                    <?php if ($candidate['mode_linktree']): ?>
-                    <button type="button" class="btn-open-editorial-switch" style="max-width:280px;" onclick="openLinktreeModal('<?= htmlspecialchars($candidate['username']) ?>');">
-                        <span>⚡</span>
-                        <span>Abrir Bio-Link Linktree</span>
-                    </button>
-                    <?php endif; ?>
-
-                    <?php if (!empty($candVideos)): ?>
-                    <button type="button" class="btn-header" style="border-color:var(--gold); color:var(--gold);" onclick="document.getElementById('sectionVideoReel').scrollIntoView({behavior:'smooth'});">
-                        <span>▶</span> Reel de Pasarela HD
-                    </button>
-                    <?php endif; ?>
-
-                    <button type="button" class="btn-header" onclick="shareProfile('<?= htmlspecialchars($candidate['full_name']) ?>', window.location.href);">
-                        <span>🔗</span> Compartir Perfil
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sección de Video de Pasarela Oficial (Si tiene) -->
-        <?php if (!empty($candVideos)): 
-            $mainVideo = $candVideos[0];
-        ?>
-        <section class="editorial-video-section" id="sectionVideoReel">
-            <h2 class="section-headline">Reel de Pasarela & <span>Presentación HD</span></h2>
-            <div class="video-player-theater">
-                <video playsinline controls preload="metadata" poster="<?= htmlspecialchars($candidate['photo_main']) ?>">
-                    <source src="<?= htmlspecialchars($mainVideo) ?>" type="video/mp4">
-                    <source src="<?= htmlspecialchars($mainVideo) ?>" type="video/quicktime">
-                    Tu navegador no soporta reproducción de video HTML5.
-                </video>
-                <div class="video-theater-caption">
-                    <span>👑 Desfile & Video Oficial · Miss Universo <?= ucfirst($candidate['sede']) ?> 2026</span>
-                    <button type="button" class="btn-header" onclick="shareProfile('<?= htmlspecialchars($candidate['full_name']) ?>', '<?= htmlspecialchars($mainVideo) ?>');">
-                        <span>🔗</span> Compartir Video
-                    </button>
-                </div>
-            </div>
-        </section>
-        <?php endif; ?>
-
-        <!-- Galería de Sesión Editorial -->
-        <?php if (!empty($candGallery)): ?>
-        <section class="editorial-gallery-section">
-            <h2 class="section-headline">Portafolio & <span>Sesión de Alta Costura</span></h2>
-            <div class="editorial-gallery-grid">
-                <?php foreach ($candGallery as $gImg): ?>
-                <div class="gallery-photo-card" onclick="openLightbox('<?= htmlspecialchars($gImg) ?>');">
-                    <img src="<?= htmlspecialchars($gImg) ?>" alt="<?= htmlspecialchars($candidate['full_name']) ?>" loading="lazy">
-                    <div class="gallery-zoom-badge">🔍</div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </section>
-        <?php endif; ?>
-    </main>
+    <?php require __DIR__.'/vip-profile.php'; ?>
 
     <?php elseif ($candidate && $isLinktreeView): ?>
     <!-- ==============================================================
@@ -1533,7 +1440,7 @@ $countWithVideos = count($candidatesWithVideos);
                 <span class="verified-star">✓</span>
             </h1>
             <div class="vip-tag"><?= htmlspecialchars($candidate['title_badge'] ?? 'Embajadora Oficial 2026') ?></div>
-            <p class="vip-occ"><?= htmlspecialchars($candidate['occupation'] ?? 'Modelo & Figura Pública') ?></p>
+            <p class="vip-occ"><?= htmlspecialchars($candidate['occupation'] ?? '') ?></p>
 
             <?php if (!empty($candidate['inst_email'])): ?>
             <div class="inst-email-banner" style="width:100%; margin-bottom:18px;">
@@ -1555,7 +1462,7 @@ $countWithVideos = count($candidatesWithVideos);
             ?>
             <button type="button" class="btn-card-action btn-card-action-video" style="width:100%; margin-bottom:14px; padding:13px;" onclick="openVideoTheater('<?= htmlspecialchars(addslashes($candidate['full_name'])) ?>', '<?= htmlspecialchars($vidsLinktree[0]) ?>', '<?= htmlspecialchars($candidate['username']) ?>', '<?= htmlspecialchars($candidate['sede']) ?>');">
                 <span>▶</span>
-                <span>Ver Reel de Pasarela HD</span>
+                <span>Ver Archivo de videos</span>
             </button>
             <?php endif; ?>
 
@@ -1594,34 +1501,37 @@ $countWithVideos = count($candidatesWithVideos);
     <!-- ==============================================================
          VISTA 3: SALÓN GENERAL DEL LEGADO 2026 (EXPERIENCIA MONUMENTAL)
          ============================================================== -->
-    <section class="salon-hero">
-        <div class="hero-eyebrow">✧ Archivo de la Corona Regional · Generación 2026 ✧</div>
-        <h1 class="hero-title">Salón del Legado 2026</h1>
-        <div class="hero-calligraphy">Donde la belleza, el liderazgo y la historia trascienden</div>
-        <p class="hero-desc">
-            Homenaje oficial a las 22 embajadoras que forjaron la historia de Miss Universo en el norte de Chile. 
-            Explora sus portafolios de alta costura, reels de pasarela en vivo y sus identidades digitales verificadas.
-        </p>
-
-        <!-- Métricas Oficiales de Lujo -->
-        <div class="metrics-banner">
-            <div class="metric-pill">
-                <span>👑</span>
-                <span><strong><?= $countTotal ?></strong> Embajadoras Históricas</span>
-            </div>
-            <div class="metric-pill">
-                <span>🎥</span>
-                <span><strong><?= $countWithVideos ?></strong> Reels de Pasarela HD</span>
-            </div>
-            <div class="metric-pill">
-                <span>🏛️</span>
-                <span><strong>Iquique</strong> (<?= $countIquique ?>) & <strong>Arica</strong> (<?= $countArica ?>)</span>
-            </div>
-            <div class="metric-pill">
-                <span>📩</span>
-                <span>Bio-Links & Correos Verificados</span>
+    <?php
+    $featured=null;
+    foreach($allCandidates as $item){
+        if($item['sede']!==$sede || empty($item['photo_main']))continue;
+        if(!$featured)$featured=$item;
+        if(preg_match($sede==='iquique'?'/^Ayalent\b/i':'/^Liz\b/i',$item['full_name'])){$featured=$item;break;}
+    }
+    ?>
+    <?php
+    $featuredPhoto=$featured['photo_main']??'';
+    foreach(json_decode($featured['photos_gallery']??'[]',true)?:[] as $photo){if(is_string($photo)&&stripos($photo,'_EDITORIAL_')!==false){$featuredPhoto=$photo;break;}}
+    ?>
+    <section class="salon-hero"><div class="archive-skyline" aria-hidden="true"></div><span class="archive-edition-art" aria-hidden="true">2026</span><div class="archive-crystals" aria-hidden="true"><span></span><span></span></div>
+        <div class="archive-intro">
+            <div class="hero-eyebrow">MISS UNIVERSO <?= strtoupper($sedeTitle) ?> · EDICIÓN 2026</div>
+            <div class="archive-season"><span class="archive-star-halo" aria-hidden="true"><img src="/2026/vip-assets/crystal-star.webp" alt=""></span><span>EL SALÓN DEL LEGADO<small>MISS UNIVERSO · 2026</small></span></div><h1 class="hero-title">Tu historia.<br>Un legado <em>que brilla.</em></h1>
+            <p class="hero-desc">Una generación que dejó su huella. Revive las historias, las miradas y los momentos de las candidatas de Miss Universo <?= $sedeTitle ?> que dieron vida a nuestra edición 2026.</p>
+            <div class="archive-hero-actions"><a class="archive-cta" href="#archivo-candidatas">Conoce a las protagonistas <span aria-hidden="true">↗</span></a><a class="archive-access" href="/2026/editar.php">Soy parte del legado ↗</a></div>
+            <div class="metrics-banner">
+                <div class="metric-pill"><strong><?= $countTotal ?></strong>Candidatas</div>
+                <div class="metric-pill"><strong><?= array_sum(array_map(fn($record)=>count(json_decode($record['photos_gallery']??'[]',true)?:[]),$allCandidates)) ?></strong>Fotografías</div>
+                <div class="metric-pill"><strong><?= $countWithVideos ?></strong>Historias en video</div>
             </div>
         </div>
+        <?php if($featured): ?>
+        <figure class="archive-feature"><a class="archive-feature-link" href="/2026/<?= htmlspecialchars($featured['username']) ?>" aria-label="Ver perfil de <?= htmlspecialchars($featured['full_name']) ?>">
+            <img src="<?= htmlspecialchars($featuredPhoto) ?>" alt="<?= htmlspecialchars($featured['full_name']) ?>, edición 2026" fetchpriority="high">
+            <span class="archive-year">2026</span>
+            <figcaption><small><?= htmlspecialchars($sedeTitle) ?> · Protagonista de nuestra historia</small><strong><?= htmlspecialchars($featured['full_name']) ?></strong><span class="archive-feature-cta">Descubre su perfil ↗</span></figcaption></a>
+        </figure>
+        <?php endif; ?>
     </section>
 
     <!-- SPOTLIGHT: REELS DE PASARELA EN VIVO (CARRUSEL HORIZONTAL) -->
@@ -1629,8 +1539,8 @@ $countWithVideos = count($candidatesWithVideos);
     <section class="reels-spotlight-section">
         <div class="reels-header-bar">
             <div class="reels-title-box">
-                <span class="reels-badge-live">● EN VIVO</span>
-                <h2 class="reels-headline">Pasarela & <span>Reels Oficiales</span></h2>
+                <span class="reels-badge-live">EN ARCHIVO</span>
+                <h2 class="reels-headline">La edición, <span>en movimiento.</span></h2>
             </div>
             <span style="font-size:12px; color:var(--text-muted);">Desliza para ver más reels →</span>
         </div>
@@ -1646,7 +1556,7 @@ $countWithVideos = count($candidatesWithVideos);
                 <div class="reel-scrim"></div>
                 <div class="reel-play-btn">▶</div>
                 <div class="reel-meta">
-                    <div class="reel-sede-tag">👑 <?= strtoupper($rc['sede']) ?></div>
+                    <div class="reel-sede-tag"><?= strtoupper($rc['sede']) ?></div>
                     <div class="reel-name"><?= htmlspecialchars($rc['full_name']) ?></div>
                 </div>
             </div>
@@ -1656,31 +1566,17 @@ $countWithVideos = count($candidatesWithVideos);
     <?php endif; ?>
 
     <!-- Barra de Control: Filtros Multi-Sede y Buscador -->
-    <div class="controls-bar">
-        <div class="filter-pills-wrap">
-            <button type="button" class="filter-pill-btn <?= ($sede === 'arica' ? '' : ($sede === 'iquique' ? '' : 'active')) ?>" data-filter="all" onclick="setSalonFilter('all', this);">
-                <span>✦</span> Todas (<?= $countTotal ?>)
-            </button>
-            <button type="button" class="filter-pill-btn <?= ($sede === 'iquique') ? 'active' : '' ?>" data-filter="iquique" onclick="setSalonFilter('iquique', this);">
-                <span>👑</span> Iquique (<?= $countIquique ?>)
-            </button>
-            <button type="button" class="filter-pill-btn <?= ($sede === 'arica') ? 'active' : '' ?>" data-filter="arica" onclick="setSalonFilter('arica', this);">
-                <span>👑</span> Arica (<?= $countArica ?>)
-            </button>
-            <button type="button" class="filter-pill-btn" data-filter="video" onclick="setSalonFilter('video', this);">
-                <span>🎥</span> Con Pasarela / Video (<?= $countWithVideos ?>)
-            </button>
-        </div>
-
+    <section class="archive-roster-heading"><div><span>ELLAS ESCRIBIERON ESTA HISTORIA</span><h2>Las protagonistas <em>de 2026.</em></h2></div><p>Perfiles, fotografías y recuerdos.<br>Un espacio propio para cada historia.</p></section><div class="controls-bar" id="archivo-candidatas">
+        <div class="filter-pills-wrap"><button type="button" class="filter-pill-btn active" data-filter="all" onclick="setSalonFilter('all',this)">Todas las protagonistas (<?= $countTotal ?>)</button><button type="button" class="filter-pill-btn" data-filter="video" onclick="setSalonFilter('video',this)">Con video (<?= $countWithVideos ?>)</button></div>
         <div class="search-box">
             <span class="search-icon">🔍</span>
-            <input type="text" id="candSearchInput" class="search-input" placeholder="Buscar por nombre, sede o profesión..." oninput="handleSearch(this.value);">
+            <input type="text" id="candSearchInput" class="search-input" placeholder="Buscar por nombre o profesión..." oninput="handleSearch(this.value);">
         </div>
     </div>
 
     <div class="results-count-bar">
-        <span>Mostrando <b id="lblCountVisible"><?= $countTotal ?></b> embajadoras en el Salón Oficial</span>
-        <span style="font-size:11px; letter-spacing:1px; text-transform:uppercase;">Colección de Alta Costura</span>
+        <span>Mostrando <b id="lblCountVisible"><?= $countTotal ?></b> candidatas en el archivo</span>
+        <span style="font-size:11px; letter-spacing:1px; text-transform:uppercase;">ARCHIVO 2026</span>
     </div>
 
     <!-- Grid de Alta Costura -->
@@ -1704,14 +1600,14 @@ $countWithVideos = count($candidatesWithVideos);
                 <div class="card-scrim"></div>
 
                 <div class="card-top-bar">
-                    <span class="chip-number">✧ <?= $cNum ?> · <?= strtoupper($c['sede']) ?> ✧</span>
+                    <span class="chip-number"><?= $cNum ?> · <?= strtoupper($c['sede']) ?></span>
                     <?php if ($hasVideo): ?>
-                    <span class="chip-reel-badge">🎥 REEL HD</span>
+                    <span class="chip-reel-badge">VIDEO</span>
                     <?php endif; ?>
                 </div>
 
                 <div class="card-body">
-                    <div class="cand-card-tag">👑 <?= htmlspecialchars($c['title_badge'] ?? 'Embajadora Oficial') ?></div>
+                    <div class="cand-card-tag"><?= htmlspecialchars($c['title_badge'] ?? 'Embajadora Oficial') ?></div>
                     <h3 class="cand-card-name"><?= htmlspecialchars($c['full_name']) ?></h3>
                     <p class="cand-card-occ"><?= htmlspecialchars($c['occupation'] ?? 'Modelo & Embajadora') ?></p>
 
@@ -1723,11 +1619,11 @@ $countWithVideos = count($candidatesWithVideos);
                         <?php endif; ?>
 
                         <button type="button" class="btn-card-action" onclick="openLinktreeModal('<?= htmlspecialchars($c['username']) ?>');">
-                            <span>⚡ Bio-Link</span>
+                            <span>Bio-Link ↗</span>
                         </button>
 
                         <a href="/2026/<?= htmlspecialchars($c['username']) ?>" class="btn-card-action">
-                            <span>📖 Perfil</span>
+                            <span>Perfil ↗</span>
                         </a>
                     </div>
                 </div>
@@ -1777,7 +1673,7 @@ $countWithVideos = count($candidatesWithVideos);
          LIGHTBOX MODAL DE FOTOS (#lightboxModal)
          ============================================================== -->
     <div id="lightboxModal" role="dialog" aria-modal="true" onclick="closeLightbox();">
-        <button type="button" class="lightbox-close-btn" onclick="closeLightbox();">&times;</button>
+        <button type="button" class="lightbox-close-btn" aria-label="Cerrar fotografía" onclick="closeLightbox();">&times;</button><button type="button" class="lightbox-prev" aria-label="Fotografía anterior" onclick="event.stopPropagation();stepLightbox(-1)">←</button><button type="button" class="lightbox-next" aria-label="Fotografía siguiente" onclick="event.stopPropagation();stepLightbox(1)">→</button><span id="lightboxCount" class="lightbox-count"></span>
         <div class="lightbox-img-wrap" onclick="event.stopPropagation();">
             <img id="lightboxImage" src="" alt="Sesión de Fotos">
         </div>
@@ -1793,7 +1689,7 @@ $countWithVideos = count($candidatesWithVideos);
 
     <!-- Pie de Página -->
     <footer class="legado-footer">
-        <p>© 2026 - 2027 Miss Universo Chile · Salón Oficial del Legado Arica & Iquique.</p>
+        <p>© 2026 - 2027 Miss Universo Chile · Salón Oficial del Legado <?= $sedeTitle ?>.</p>
         <p style="margin-top:8px;">
             ¿Eres parte de la Generación 2026? <a href="/2026/editar.php">Ingresa a tu panel de embajadora oficial</a>
         </p>
@@ -1904,6 +1800,7 @@ $countWithVideos = count($candidatesWithVideos);
         let activeVideoUrl = '';
 
         function openVideoTheater(name, videoUrl, username, sede) {
+            if(!/\.(mp4|mov|webm|m4v)(?:[?#].*)?$/i.test(videoUrl)){location.href='/2026/'+encodeURIComponent(username)+'#sectionVideoReel';return;}
             const modal = document.getElementById('videoTheaterModal');
             const videoElem = document.getElementById('theaterHtmlVideo');
             const sourceElem = document.getElementById('theaterVideoSource');
@@ -1949,22 +1846,27 @@ $countWithVideos = count($candidatesWithVideos);
         // ==========================================
         // LIGHTBOX DE FOTOS
         // ==========================================
+        let lightboxIndex=0;let lastGalleryFocus=null;
+        function stepLightbox(delta){const pics=Array.from(document.querySelectorAll('[data-gallery-src]'));if(!pics.length)return;lightboxIndex=(lightboxIndex+delta+pics.length)%pics.length;document.getElementById('lightboxImage').src=pics[lightboxIndex].dataset.gallerySrc;document.getElementById('lightboxCount').textContent=(lightboxIndex+1)+' / '+pics.length;}
         function openLightbox(imgSrc) {
+            lastGalleryFocus=document.activeElement;const pics=Array.from(document.querySelectorAll('[data-gallery-src]'));lightboxIndex=pics.findIndex(x=>x.dataset.gallerySrc===imgSrc);document.getElementById('lightboxCount').textContent=(lightboxIndex+1)+' / '+pics.length;
             const modal = document.getElementById('lightboxModal');
             const img = document.getElementById('lightboxImage');
             if (modal && img) {
                 img.src = imgSrc;
-                modal.classList.add('is-open');
+                modal.classList.add('is-open');document.body.classList.add('gallery-open');modal.querySelector('.lightbox-close-btn').focus();
             }
         }
 
         function closeLightbox() {
             const modal = document.getElementById('lightboxModal');
-            if (modal) modal.classList.remove('is-open');
+            if (modal) modal.classList.remove('is-open');document.body.classList.remove('gallery-open');if(lastGalleryFocus&&document.contains(lastGalleryFocus))lastGalleryFocus.focus();
         }
 
         // Tecla ESC para cerrar cualquier modal
         window.addEventListener('keydown', (e) => {
+            if(document.getElementById('vipPhotoDialog')?.open)return;
+            if(document.getElementById('lightboxModal').classList.contains('is-open')&&['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();stepLightbox(e.key==='ArrowLeft'?-1:1);}
             if (e.key === 'Escape') {
                 closeVideoTheater();
                 closeLightbox();
@@ -2003,7 +1905,7 @@ $countWithVideos = count($candidatesWithVideos);
         // Detección Hash para Linktree (#usuario)
         window.addEventListener('DOMContentLoaded', () => {
             const hash = window.location.hash.replace('#', '').trim();
-            if (hash && hash !== '') {
+            if (hash && !['portfolioGallery','portfolioStory','sectionVideoReel','archivo-candidatas','vipPerfil','vipFotos','vipVideos','vipRedes','vipMyStory'].includes(hash)) {
                 openLinktreeModal(hash);
             }
         });
@@ -2065,7 +1967,7 @@ $countWithVideos = count($candidatesWithVideos);
                 videoBtnHtml = `
                     <button type="button" class="btn-card-action btn-card-action-video" style="width:100%; margin-bottom:14px; padding:13px; font-size:12px;" onclick="closeLinktreeModal(); openVideoTheater('${c.full_name.replace(/'/g, "\\'")}', '${vids[0]}', '${c.username}', '${c.sede}');">
                         <span>▶</span>
-                        <span>Ver Reel de Pasarela HD</span>
+                        <span>Ver Archivo de videos</span>
                     </button>
                 `;
             }
@@ -2083,7 +1985,7 @@ $countWithVideos = count($candidatesWithVideos);
                         <span class="verified-star">✓</span>
                     </h2>
                     <div class="vip-tag">${c.title_badge || 'Embajadora Oficial 2026'}</div>
-                    <p class="vip-occ">${c.occupation || 'Modelo & Figura Pública'}</p>
+                    <p class="vip-occ">${c.occupation || ''}</p>
 
                     ${c.inst_email ? `
                     <div class="inst-email-banner" style="width:100%; margin-bottom:16px;">

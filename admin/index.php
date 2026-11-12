@@ -215,7 +215,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (in_array($estado, ['pendiente', 'contactada', 'seleccionada', 'descartada'])) {
             $stmt = $pdo->prepare("UPDATE postulantes_2027 SET estado = ? WHERE id = ?");
             $stmt->execute([$estado, $id]);
-            echo json_encode(['status' => 'ok', 'message' => 'Estado actualizado']);
+
+            // Obtener postulante para sincronización inmediata
+            $stmtP = $pdo->prepare("SELECT * FROM postulantes_2027 WHERE id = ?");
+            $stmtP->execute([$id]);
+            $p = $stmtP->fetch(PDO::FETCH_ASSOC);
+
+            $targetSede = $p['sede'] ?? 'arica';
+            $targetPrefix = ($targetSede === 'iquique') ? 'iquique27_' : 'arica27_';
+            $candId = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $p['nombres'] ?? 'cand')) . $id;
+
+            // Si es 'seleccionada', sincronizar AUTOMÁTICAMENTE a candidatas oficiales
+            if ($estado === 'seleccionada' && $p) {
+                $userId = 'usr_' . substr(md5($p['email'] . $p['id']), 0, 20);
+                $fullName = trim($p['nombres'] . ' ' . $p['apellidos']);
+                $photoMain = !empty($p['foto_rostro']) ? '/' . ltrim($p['foto_rostro'], '/') : '';
+                $mediaJson = json_encode([
+                    'gallery' => !empty($p['foto_cuerpo']) ? ['/' . ltrim($p['foto_cuerpo'], '/')] : [],
+                    'videos' => [],
+                    'socials' => !empty($p['instagram']) ? [['label' => 'Instagram', 'url' => 'https://instagram.com/' . ltrim($p['instagram'], '@')]] : []
+                ], JSON_UNESCAPED_UNICODE);
+
+                // Crear usuario rol candidate si no existe
+                $userStmt = $pdo->prepare("INSERT IGNORE INTO {$targetPrefix}users (id, name, email, password_hash, role) VALUES (?, ?, ?, ?, 'candidate')");
+                $userStmt->execute([$userId, $fullName, $p['email'], password_hash('Candidata2027!', PASSWORD_BCRYPT)]);
+
+                // Insertar o actualizar candidata oficial con published = 1
+                $candStmt = $pdo->prepare("
+                    INSERT INTO {$targetPrefix}candidates (id, user_id, name, bio, purpose, photo, media, published)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+                    ON DUPLICATE KEY UPDATE 
+                        name = VALUES(name),
+                        bio = VALUES(bio),
+                        purpose = VALUES(purpose),
+                        photo = VALUES(photo),
+                        media = VALUES(media),
+                        published = 1
+                ");
+                $candStmt->execute([$candId, $userId, $fullName, $p['motivacion'] ?? 'Candidata Oficial 2027', $p['ocupacion'] ?? '', $photoMain, $mediaJson]);
+            } elseif ($estado === 'descartada' && $p) {
+                // Si fue descartada, ocultar de la lista pública
+                $pdo->prepare("UPDATE {$targetPrefix}candidates SET published = 0 WHERE id = ?")->execute([$candId]);
+            }
+
+            echo json_encode([
+                'status' => 'ok', 
+                'message' => ($estado === 'seleccionada') 
+                    ? '¡Candidata aprobada y publicada en la lista oficial de ' . ucfirst($targetSede) . '!' 
+                    : 'Estado actualizado correctamente.',
+                'estado' => $estado,
+                'sede' => ucfirst($targetSede)
+            ]);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Estado inválido']);
         }
@@ -501,9 +551,15 @@ $countAricaPost = (int)$pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE 
 $countIquiquePost = (int)$pdo->query("SELECT COUNT(*) FROM postulantes_2027 WHERE sede = 'iquique'")->fetchColumn();
 
 // Candidatas Oficiales
-$aricaCandidates = $pdo->query("SELECT * FROM arica27_candidates ORDER BY published DESC, name ASC")->fetchAll(PDO::FETCH_ASSOC);
-$iquiqueCandidates = $pdo->query("SELECT * FROM iquique27_candidates ORDER BY published DESC, name ASC")->fetchAll(PDO::FETCH_ASSOC);
-$candidatasList = ($activeSede === 'iquique') ? $iquiqueCandidates : $aricaCandidates;
+$aricaCandidates = $pdo->query("SELECT *, 'Arica' as sede_label FROM arica27_candidates ORDER BY published DESC, name ASC")->fetchAll(PDO::FETCH_ASSOC);
+$iquiqueCandidates = $pdo->query("SELECT *, 'Iquique' as sede_label FROM iquique27_candidates ORDER BY published DESC, name ASC")->fetchAll(PDO::FETCH_ASSOC);
+if ($activeSede === 'iquique') {
+    $candidatasList = $iquiqueCandidates;
+} elseif ($activeSede === 'arica') {
+    $candidatasList = $aricaCandidates;
+} else {
+    $candidatasList = array_merge($aricaCandidates, $iquiqueCandidates);
+}
 
 // Votos y Rankings
 $aricaVotesCount = (int)$pdo->query("SELECT COUNT(*) FROM arica27_votes")->fetchColumn();
@@ -520,14 +576,26 @@ $rankingVotes = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 // Sponsors
-$sponsorsArica = $pdo->query("SELECT * FROM arica27_sponsors ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
-$sponsorsIquique = $pdo->query("SELECT * FROM iquique27_sponsors ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
-$sponsorsList = ($activeSede === 'iquique') ? $sponsorsIquique : $sponsorsArica;
+$sponsorsArica = $pdo->query("SELECT *, 'Arica' as sede_label FROM arica27_sponsors ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+$sponsorsIquique = $pdo->query("SELECT *, 'Iquique' as sede_label FROM iquique27_sponsors ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+if ($activeSede === 'iquique') {
+    $sponsorsList = $sponsorsIquique;
+} elseif ($activeSede === 'arica') {
+    $sponsorsList = $sponsorsArica;
+} else {
+    $sponsorsList = array_merge($sponsorsArica, $sponsorsIquique);
+}
 
 // Noticias
-$newsArica = $pdo->query("SELECT * FROM arica27_news ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
-$newsIquique = $pdo->query("SELECT * FROM iquique27_news ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
-$newsList = ($activeSede === 'iquique') ? $newsIquique : $newsArica;
+$newsArica = $pdo->query("SELECT *, 'Arica' as sede_label FROM arica27_news ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+$newsIquique = $pdo->query("SELECT *, 'Iquique' as sede_label FROM iquique27_news ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+if ($activeSede === 'iquique') {
+    $newsList = $newsIquique;
+} elseif ($activeSede === 'arica') {
+    $newsList = $newsArica;
+} else {
+    $newsList = array_merge($newsArica, $newsIquique);
+}
 
 // Tickets
 $whereTick = ($activeSede !== 'ambas') ? "WHERE sede = '$activeSede'" : "";
@@ -1417,6 +1485,7 @@ usort($embajadorasMeta, fn($a, $b) => ($b['total_invitadas'] ?? 0) <=> ($a['tota
                             <thead>
                                 <tr>
                                     <th>Foto</th>
+                                    <th>Sede</th>
                                     <th>ID / Código</th>
                                     <th>Nombre Oficial</th>
                                     <th>Propósito / Ocupación</th>
@@ -1426,15 +1495,20 @@ usort($embajadorasMeta, fn($a, $b) => ($b['total_invitadas'] ?? 0) <=> ($a['tota
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($candidatasList as $c): ?>
+                                <?php foreach ($candidatasList as $c): 
+                                    $candSede = strtolower($c['sede_label'] ?? ($activeSede === 'iquique' ? 'iquique' : 'arica'));
+                                    $cPrefix = ($candSede === 'iquique') ? 'iquique27_' : 'arica27_';
+                                    $vTotal = (int)($pdo->query("SELECT COUNT(*) FROM {$cPrefix}votes WHERE candidate_id = '{$c['id']}'")->fetchColumn() ?? 0);
+                                ?>
                                 <tr>
                                     <td>
                                         <?php if (!empty($c['photo'])): ?>
-                                            <img src="<?= htmlspecialchars($c['photo']) ?>" class="thumb-box" alt="<?= htmlspecialchars($c['name']) ?>">
+                                            <img src="<?= htmlspecialchars($c['photo']) ?>" class="thumb-box" alt="<?= htmlspecialchars($c['name']) ?>" onclick="window.open('<?= htmlspecialchars($c['photo']) ?>', '_blank')">
                                         <?php else: ?>
                                             <div class="thumb-box" style="display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05);">👑</div>
                                         <?php endif; ?>
                                     </td>
+                                    <td><span class="badge badge-<?= $candSede ?>"><?= strtoupper($candSede) ?></span></td>
                                     <td><code><?= htmlspecialchars($c['id']) ?></code></td>
                                     <td><strong><?= htmlspecialchars($c['name']) ?></strong></td>
                                     <td>
@@ -1443,9 +1517,6 @@ usort($embajadorasMeta, fn($a, $b) => ($b['total_invitadas'] ?? 0) <=> ($a['tota
                                         </div>
                                     </td>
                                     <td>
-                                        <?php
-                                        $vTotal = (int)($pdo->query("SELECT COUNT(*) FROM {$tablePrefix}votes WHERE candidate_id = '{$c['id']}'")->fetchColumn() ?? 0);
-                                        ?>
                                         <span class="badge badge-pink"><?= $vTotal ?> votos</span>
                                     </td>
                                     <td>
@@ -1458,13 +1529,13 @@ usort($embajadorasMeta, fn($a, $b) => ($b['total_invitadas'] ?? 0) <=> ($a['tota
                                     <td>
                                         <div style="display:flex; gap:6px;">
                                             <button type="button" onclick="openInjectVotesModal('<?= htmlspecialchars($c['id']) ?>', '<?= htmlspecialchars(addslashes($c['name'])) ?>')" class="btn-action btn-gold" title="Inyectar Votos">🗳️ Sumar Votos</button>
-                                            <button type="button" onclick="deleteOfficialCandidate('<?= htmlspecialchars($c['id']) ?>')" class="btn-action btn-outline" style="color:#f87171;">🗑️</button>
+                                            <button type="button" onclick="deleteOfficialCandidate('<?= htmlspecialchars($c['id']) ?>', '<?= $candSede ?>')" class="btn-action btn-outline" style="color:#f87171;" title="Eliminar">🗑️</button>
                                         </div>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
                                 <?php if (empty($candidatasList)): ?>
-                                <tr><td colspan="7" style="text-align:center; color:#64748b; padding:25px;">No hay candidatas oficiales en esta sede aún. Promueve postulantes del casting con el botón 👑 o crea una nueva arriba.</td></tr>
+                                <tr><td colspan="8" style="text-align:center; color:#64748b; padding:25px;">No hay candidatas oficiales en esta sede aún. Al marcar 'Seleccionada' en la pestaña Postulantes, se sincronizará aquí de inmediato.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
@@ -1960,7 +2031,14 @@ usort($embajadorasMeta, fn($a, $b) => ($b['total_invitadas'] ?? 0) <=> ($a['tota
             const res = await fetch('index.php', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.status === 'ok') {
-                console.log('Estado actualizado');
+                if (estado === 'seleccionada') {
+                    alert(data.message || '¡Candidata aprobada y publicada exitosamente en el listado oficial!');
+                    window.location.href = 'index.php?tab=candidatas&sede=<?= $activeSede ?>';
+                } else {
+                    console.log('Estado actualizado:', estado);
+                }
+            } else {
+                alert(data.message || 'Error al actualizar estado');
             }
         }
 
@@ -2005,12 +2083,12 @@ usort($embajadorasMeta, fn($a, $b) => ($b['total_invitadas'] ?? 0) <=> ($a['tota
         }
 
         // Eliminar Candidata Oficial
-        async function deleteOfficialCandidate(id) {
+        async function deleteOfficialCandidate(id, sede) {
             if (!confirm(`¿Eliminar la ficha oficial ${id}?`)) return;
             const formData = new FormData();
             formData.append('action', 'delete_candidate');
             formData.append('id', id);
-            formData.append('sede', '<?= $activeSede ?>');
+            formData.append('sede', sede || '<?= $activeSede ?>');
             const res = await fetch('index.php', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.status === 'ok') location.reload();

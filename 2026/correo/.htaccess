@@ -1,0 +1,11 @@
+Options -Indexes
+DirectoryIndex index.php
+<FilesMatch "^(site\.php|.*\.(json|log|sqlite|bak))$">
+Require all denied
+</FilesMatch>
+<FilesMatch "^\.">
+Require all denied
+</FilesMatch>
+<FilesMatch "\.php$">
+SetHandler proxy:fcgi://andrekis-php81
+</FilesMatch>

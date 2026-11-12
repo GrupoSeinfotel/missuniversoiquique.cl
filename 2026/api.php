@@ -11,6 +11,9 @@
  */
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, private');
+header('Referrer-Policy: no-referrer');
+header('X-Content-Type-Options: nosniff');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
@@ -21,16 +24,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $is_api = true;
-require_once __DIR__ . '/../config/db.php';
+require_once (getenv('LEGADO_DB_CONFIG') ?: __DIR__ . '/../config/db.php');
+require_once __DIR__ . '/mailbox.php';
+require_once __DIR__.'/profile.php';
 
 // Detectar sede
 $host = $_SERVER['HTTP_HOST'] ?? '';
 $sede = (strpos($host, 'iquique') !== false) ? 'iquique' : 'arica';
-if (isset($_REQUEST['sede']) && in_array(strtolower($_REQUEST['sede']), ['arica', 'iquique'])) {
-    $sede = strtolower($_REQUEST['sede']);
-}
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
+require_once __DIR__.'/activation-2026.php';
+mu_activation_dispatch($pdo,(string)$action);
+legado_mail_dispatch($pdo,(string)$action);
+require_once __DIR__.'/history.php';
+mu_history_begin($pdo,$sede,(string)$action);
 
 // ==========================================
 // 1. OBTENER DATOS PÚBLICOS LINKTREE
@@ -46,18 +53,15 @@ if ($action === 'get_linktree') {
     $stmt->execute([$sede, $user]);
     $candidate = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$candidate) {
-        // Intento de fallback sin filtrar sede en caso de link cruzado
-        $stmt2 = $pdo->prepare("SELECT id, sede, username, full_name, title_badge, photo_main, photos_gallery, videos_gallery, occupation, inst_email, custom_links, mode_editorial, mode_linktree, is_minimal_record, instagram, tiktok, whatsapp FROM legado_2026 WHERE username = ? LIMIT 1");
-        $stmt2->execute([$user]);
-        $candidate = $stmt2->fetch(PDO::FETCH_ASSOC);
-    }
+
 
     if (!$candidate) {
         http_response_code(404);
         echo json_encode(['status' => 'error', 'message' => 'Candidata no encontrada en el registro']);
         exit;
     }
+
+    $candidate=legado_public_record(legado_media_public(legado_mail_public($pdo,$candidate)));
 
     // Si está en modo mínimo, ocultamos links personales por privacidad
     if (!empty($candidate['is_minimal_record'])) {
@@ -85,8 +89,8 @@ if ($action === 'get_profile') {
         exit;
     }
 
-    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE magic_token = ? LIMIT 1");
-    $stmt->execute([$token]);
+    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE magic_token = ? AND sede = ? LIMIT 1");
+    $stmt->execute([$token,$sede]);
     $cand = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$cand) {
@@ -97,7 +101,7 @@ if ($action === 'get_profile') {
 
     echo json_encode([
         'status' => 'success',
-        'candidate' => $cand
+        'candidate' => legado_mail_public($pdo,$cand)
     ]);
     exit;
 }
@@ -120,8 +124,8 @@ if ($action === 'save_profile') {
     }
 
     // Verificar candidata
-    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE magic_token = ? LIMIT 1");
-    $stmt->execute([$token]);
+    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE magic_token = ? AND sede = ? LIMIT 1");
+    $stmt->execute([$token,$sede]);
     $cand = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$cand) {
@@ -151,8 +155,9 @@ if ($action === 'save_profile') {
         }
     }
 
-    // Correo institucional recalculado según username
-    $instEmail = "{$newUsername}@2026.missuniverso{$currentSede}.cl";
+    // La casilla confirmada conserva su dirección al editar el perfil
+    $mailState=legado_mail_status($pdo,(string)$id);
+    $instEmail=$mailState&&$mailState['status']==='active'?$mailState['address']:'';
 
     // Campos editables
     $emailPersonal = trim($_POST['email_personal'] ?? $cand['email_personal']);
@@ -180,19 +185,13 @@ if ($action === 'save_profile') {
     $modeLinktree = isset($_POST['mode_linktree']) ? intval($_POST['mode_linktree']) : 1;
     $isMinimalRecord = isset($_POST['is_minimal_record']) ? intval($_POST['is_minimal_record']) : 0;
 
-    // Videos de pasarela (JSON)
-    $videosGallery = $cand['videos_gallery'];
-    if (isset($_POST['videos_gallery'])) {
-        $rawVideos = $_POST['videos_gallery'];
-        if (is_array($rawVideos)) {
-            $videosGallery = json_encode($rawVideos, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        } else {
-            json_decode($rawVideos);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $videosGallery = $rawVideos;
-            }
-        }
-    }
+    $rawVideos=$_POST['videos_gallery']??($cand['videos_gallery']?:'[]');$videoList=is_array($rawVideos)?$rawVideos:json_decode($rawVideos,true);
+    if(!is_array($videoList)||count($videoList)>40){http_response_code(400);echo json_encode(['status'=>'error','message'=>'Usa una lista de hasta 40 videos.']);exit;}
+    $videoList=array_values(array_unique(array_filter(array_map('trim',$videoList))));foreach($videoList as $url)if(!legado_media_url($url)){http_response_code(400);echo json_encode(['status'=>'error','message'=>'Hay un enlace de video no válido.']);exit;}
+    $videosGallery=json_encode($videoList,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+    $details=json_decode($_POST['profile_details']??($cand['profile_details']?:'{}'),true);if(!is_array($details))$details=[];
+    $cleanDetails=[];foreach(['education','hobbies','future_aspirations','height','eye_color','hair_color'] as $key){$v=$details[$key]??'';if(!is_scalar($v)||mb_strlen((string)$v)>5000){http_response_code(400);echo json_encode(['status'=>'error','message'=>'Revisa los datos de tu trayectoria.']);exit;}$cleanDetails[$key]=trim((string)$v);}
+    $profileDetails=json_encode($cleanDetails,JSON_UNESCAPED_UNICODE);
 
     // Actualizar en base de datos
     $updateStmt = $pdo->prepare("
@@ -207,6 +206,7 @@ if ($action === 'save_profile') {
             whatsapp = ?,
             custom_links = ?,
             videos_gallery = ?,
+            profile_details = ?,
             mode_editorial = ?,
             mode_linktree = ?,
             is_minimal_record = ?,
@@ -225,6 +225,7 @@ if ($action === 'save_profile') {
         $whatsapp,
         $customLinks,
         $videosGallery,
+        $profileDetails,
         $modeEditorial,
         $modeLinktree,
         $isMinimalRecord,
@@ -235,6 +236,7 @@ if ($action === 'save_profile') {
     $stmtReload = $pdo->prepare("SELECT * FROM legado_2026 WHERE id = ?");
     $stmtReload->execute([$id]);
     $updatedCand = $stmtReload->fetch(PDO::FETCH_ASSOC);
+    mu_history_commit($pdo);
 
     echo json_encode([
         'status' => 'success',
@@ -242,6 +244,22 @@ if ($action === 'save_profile') {
         'candidate' => $updatedCand
     ]);
     exit;
+}
+
+
+if($action==='upload_video'){
+ if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);echo json_encode(['status'=>'error','message'=>'Método no permitido']);exit;}
+ $token=(string)($_POST['token']??'');$q=$pdo->prepare('SELECT id,sede FROM legado_2026 WHERE magic_token=? AND sede=? LIMIT 1');$q->execute([$token,$sede]);$owner=$q->fetch(PDO::FETCH_ASSOC);
+ if(!$owner){http_response_code(403);echo json_encode(['status'=>'error','message'=>'Acceso no válido']);exit;}
+ $file=$_FILES['video']??null;if(!$file||$file['error']!==UPLOAD_ERR_OK){http_response_code(400);echo json_encode(['status'=>'error','message'=>'No se pudo recibir el archivo. Máximo 100 MB por video.']);exit;}
+ $ext=strtolower(pathinfo($file['name'],PATHINFO_EXTENSION));$mime=(new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+ $types=['mp4'=>['video/mp4','application/mp4'],'mov'=>['video/quicktime'],'webm'=>['video/webm']];
+ if(!isset($types[$ext])||!in_array($mime,$types[$ext],true)||$file['size']>100*1024*1024){http_response_code(400);echo json_encode(['status'=>'error','message'=>'Usa videos MP4, MOV o WebM válidos de hasta 100 MB.']);exit;}
+ $dir=__DIR__.'/../uploads/legado/'.$owner['sede'].'/';if(!is_dir($dir)&&!mkdir($dir,0755,true))throw new RuntimeException('No se pudo crear el archivo');
+ $name='video_'.bin2hex(random_bytes(20)).'.'.$ext;$url='/uploads/legado/'.$owner['sede'].'/'.$name;
+ if(!move_uploaded_file($file['tmp_name'],$dir.$name)){http_response_code(500);echo json_encode(['status'=>'error','message'=>'No se pudo guardar el archivo']);exit;}
+ try{$q=$pdo->prepare('SELECT videos_gallery FROM legado_2026 WHERE id=? FOR UPDATE');$q->execute([$owner['id']]);$urls=json_decode($q->fetchColumn()?:'[]',true)?:[];if(count($urls)>=40)throw new RuntimeException('Tu archivo admite hasta 40 videos o referencias.');$urls[]=$url;$q=$pdo->prepare('UPDATE legado_2026 SET videos_gallery=?,updated_at=NOW() WHERE id=?');$q->execute([json_encode($urls,JSON_UNESCAPED_SLASHES),$owner['id']]);mu_history_commit($pdo);}catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();@unlink($dir.$name);echo json_encode(['status'=>'error','message'=>'No se pudo confirmar el video. Revisa si alcanzaste el límite de 40 archivos.']);exit;}
+ echo json_encode(['status'=>'success','video_url'=>$url]);exit;
 }
 
 // ==========================================
@@ -263,8 +281,8 @@ if ($action === 'upload_photo') {
         exit;
     }
 
-    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE magic_token = ? LIMIT 1");
-    $stmt->execute([$token]);
+    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE magic_token = ? AND sede = ? LIMIT 1");
+    $stmt->execute([$token,$sede]);
     $cand = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$cand) {
@@ -292,6 +310,7 @@ if ($action === 'upload_photo') {
         exit;
     }
 
+    if(!@getimagesize($file['tmp_name'])){http_response_code(400);echo json_encode(['status'=>'error','message'=>'El archivo no contiene una imagen válida.']);exit;}
     // Carpeta destino
     $targetDir = __DIR__ . '/../uploads/legado/' . $cand['sede'] . '/';
     if (!is_dir($targetDir)) {
@@ -308,6 +327,7 @@ if ($action === 'upload_photo') {
 
     $publicUrl = '/uploads/legado/' . $cand['sede'] . '/' . $fileName;
 
+    try {
     if ($type === 'main') {
         $up = $pdo->prepare("UPDATE legado_2026 SET photo_main = ? WHERE id = ?");
         $up->execute([$publicUrl, $cand['id']]);
@@ -323,6 +343,8 @@ if ($action === 'upload_photo') {
         $up->execute([json_encode($gallery, JSON_UNESCAPED_SLASHES), $cand['id']]);
     }
 
+    mu_history_commit($pdo);
+    } catch(Throwable $e) { if($pdo->inTransaction())$pdo->rollBack(); @unlink($destPath); http_response_code(500); exit(json_encode(['status'=>'error','message'=>'No se pudo confirmar el cambio. Inténtalo nuevamente.'])); }
     echo json_encode([
         'status' => 'success',
         'message' => 'Foto subida correctamente',
@@ -344,8 +366,8 @@ if ($action === 'delete_gallery_photo') {
         exit;
     }
 
-    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE magic_token = ? LIMIT 1");
-    $stmt->execute([$token]);
+    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE magic_token = ? AND sede = ? LIMIT 1");
+    $stmt->execute([$token,$sede]);
     $cand = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$cand) {
@@ -367,6 +389,7 @@ if ($action === 'delete_gallery_photo') {
     $up = $pdo->prepare("UPDATE legado_2026 SET photos_gallery = ? WHERE id = ?");
     $up->execute([json_encode($newGallery, JSON_UNESCAPED_SLASHES), $cand['id']]);
 
+    mu_history_commit($pdo);
     echo json_encode([
         'status' => 'success',
         'message' => 'Foto eliminada de la galería',
@@ -385,14 +408,14 @@ if ($action === 'request_token') {
         exit;
     }
 
-    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE email_personal = ? LIMIT 1");
-    $stmt->execute([$email]);
+    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE email_personal = ? AND sede = ? LIMIT 1");
+    $stmt->execute([$email,$sede]);
     $cand = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$cand) {
         // También verificar por username si lo ingresaron
-        $stmt2 = $pdo->prepare("SELECT * FROM legado_2026 WHERE username = ? LIMIT 1");
-        $stmt2->execute([$email]);
+        $stmt2 = $pdo->prepare("SELECT * FROM legado_2026 WHERE username = ? AND sede = ? LIMIT 1");
+        $stmt2->execute([$email,$sede]);
         $cand = $stmt2->fetch(PDO::FETCH_ASSOC);
     }
 

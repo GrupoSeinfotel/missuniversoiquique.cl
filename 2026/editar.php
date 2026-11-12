@@ -3,7 +3,9 @@
  * MISS UNIVERSO · PANEL DE EMBABAJADORA 2026 (EDITAR PERFIL)
  * Acceso sin contraseñas mediante Magic Token: /2026/editar.php?token=...
  */
-require_once __DIR__ . '/../config/db.php';
+require_once (getenv('LEGADO_DB_CONFIG') ?: __DIR__ . '/../config/db.php');
+require_once __DIR__ . '/mailbox.php';
+require_once __DIR__.'/profile.php';
 
 // Detectar sede
 $host = $_SERVER['HTTP_HOST'] ?? '';
@@ -14,8 +16,8 @@ $candidate = null;
 $errorMsg = '';
 
 if (!empty($token)) {
-    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE magic_token = ? LIMIT 1");
-    $stmt->execute([$token]);
+    $stmt = $pdo->prepare("SELECT * FROM legado_2026 WHERE magic_token = ? AND sede = ? LIMIT 1");
+    $stmt->execute([$token,$defaultSede]);
     $candidate = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$candidate) {
@@ -23,11 +25,28 @@ if (!empty($token)) {
     }
 }
 
+$adminPreview=false;
+if($candidate){
+ require_once __DIR__.'/admin-access.php';
+ $preview=$_SESSION['legacy_preview']??[];
+ $adminPreview=legacy_owner($pdo,$legacyCity)&&($preview['until']??0)>=time()&&($preview['city']??'')===$legacyCity&&(string)($preview['id']??'')===(string)$candidate['id']&&hash_equals((string)($preview['hash']??''),hash('sha256',$token));
+ session_write_close();
+}
+if($candidate)$candidate=legado_mail_public($pdo,$candidate);
+$mailState=$candidate?legado_mail_status($pdo,(string)$candidate['id']):null;
+$mailConfig=legado_mail_config();
 $sede = $candidate ? $candidate['sede'] : $defaultSede;
+$mailReady=!empty($mailConfig['enabled'])&&!empty($mailConfig['domains_ready'][$sede]);
+require_once __DIR__.'/activation-2026.php';
+$activationConfig=mu_activation_config();$activationCsrf='';$activationAuditRef='';if($candidate){$activationCsrf=mu_activation_session($sede,(string)$candidate['id']);if(($_SESSION['mail_panel_seen']??0)<time()-60){try{$activationAuditRef=bin2hex(random_bytes(12));mu_activation_audit($pdo,$candidate,$adminPreview?'admin_panel_opened':'panel_opened',$activationAuditRef);$_SESSION['mail_panel_seen']=time();}catch(Throwable $e){error_log('MU: panel audit unavailable');}}session_write_close();header('Cache-Control: no-store, private');header('Referrer-Policy: no-referrer');}
 $sedeTitle = ($sede === 'arica') ? 'Arica' : 'Iquique';
 $sedeColor = ($sede === 'arica') ? '#f5245f' : '#b930d5';
 $sedeAccent = ($sede === 'arica') ? '#e2a93b' : '#38bdf8';
 $baseUrl = "https://missuniverso{$sede}.cl";
+$activationNonce=base64_encode(random_bytes(24));
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-$activationNonce'; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data: blob:; media-src 'self' https: blob:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests");
+header('X-Frame-Options: DENY');header('X-Content-Type-Options: nosniff');header('Referrer-Policy: no-referrer');
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -35,7 +54,7 @@ $baseUrl = "https://missuniverso{$sede}.cl";
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Panel de Embajadora 2026 · Miss Universo <?= $sedeTitle ?></title>
-    <meta name="theme-color" content="#010820">
+    <meta name="mu-audit-ref" content="<?= htmlspecialchars($activationAuditRef,ENT_QUOTES,'UTF-8') ?>"><meta name="theme-color" content="#010820">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -609,8 +628,10 @@ $baseUrl = "https://missuniverso{$sede}.cl";
             text-align: center;
         }
     </style>
-</head>
+<link rel="stylesheet" href="/2026/legado.css?v=20261022-portfolio4">
+<link rel="stylesheet" href="/2026/institutional-mail.css?v=3"><script src="/2026/activation-2026.js?v=1" defer></script></head>
 <body>
+<?php if($adminPreview): ?><aside style="position:relative;z-index:1000;background:#eaddbc;color:#26344b;padding:15px 20px;font:13px/1.6 system-ui;border-bottom:1px solid #b99a55;display:flex;gap:15px;justify-content:space-between;align-items:center;flex-wrap:wrap"><span><strong>Vista de superadministrador · <?= htmlspecialchars($candidate['full_name'],ENT_QUOTES,'UTF-8') ?></strong><br>Estás en el editor real. Los cambios guardados se publican en este perfil.</span><a href="/admin-postulantes/accesos-legado.php" style="color:#26344b;font-weight:600">← Volver a candidatas</a></aside><?php endif; ?>
 
     <!-- Navegación Superior -->
     <header class="top-nav">
@@ -657,7 +678,7 @@ $baseUrl = "https://missuniverso{$sede}.cl";
         </div>
     </div>
 
-    <script>
+    <script nonce="<?= htmlspecialchars($activationNonce,ENT_QUOTES,'UTF-8') ?>">
         async function handleRequestToken(e) {
             e.preventDefault();
             const btn = document.getElementById('btnReqSubmit');
@@ -721,6 +742,8 @@ $baseUrl = "https://missuniverso{$sede}.cl";
                 <span id="btnCopyInstaText">Copiar Linktree para mi Instagram</span>
             </button>
 
+            <a class="mail-activation-button" style="max-width:540px;margin:18px auto 0" href="<?= !empty($candidate['inst_email'])?'/2026/correo/':'#institutionalMail' ?>"><?= !empty($candidate['inst_email'])?'Abrir mi correo institucional de Miss Universo':($mailState?'Ver mi solicitud de correo institucional':'Activar mi correo institucional de Miss Universo') ?> ↗</a>
+
             <!-- Vanity Links -->
             <div class="vanity-links-box">
                 <div class="vanity-card">
@@ -742,14 +765,24 @@ $baseUrl = "https://missuniverso{$sede}.cl";
                 </div>
             </div>
 
-            <!-- Caja de Correo Institucional -->
-            <div class="inst-box">
-                <div class="inst-box-info">
-                    <h4>📩 Correo Oficial Miss Universo: <span id="dynInstEmail"><?= htmlspecialchars($candidate['inst_email']) ?></span></h4>
-                    <p>Alias institucional que puedes poner en tu perfil o contratos; redirige a tu correo personal (<?= htmlspecialchars($candidate['email_personal']) ?>).</p>
-                </div>
-                <button type="button" class="btn-copy" onclick="copyText(document.getElementById('dynInstEmail').textContent, this);">Copiar Correo</button>
-            </div>
+            <section class="mailbox-setup institutional-mail" id="institutionalMail" aria-labelledby="mailboxTitle">
+             <div class="institutional-mail-icon" aria-hidden="true">✉</div><span class="institutional-mail-kicker">MISS UNIVERSO <?= strtoupper($sedeTitle) ?> · 2026</span><h3 id="mailboxTitle">Tu correo institucional</h3>
+             <p>Una casilla propia para enviar y recibir mensajes en nuestra bandeja exclusiva.</p>
+             <?php if(!empty($candidate['inst_email'])): ?>
+              <span class="mail-state mail-state-active">Casilla activa</span><strong class="mail-address"><?= htmlspecialchars($candidate['inst_email']) ?></strong><a class="mail-activation-button" href="/2026/correo/">Abrir mi correo institucional ↗</a><p>Ingresa con tu dirección completa y la contraseña que elegiste.</p>
+             <?php elseif($mailState&&in_array($mailState['status'],['review','error'],true)): ?>
+              <span class="mail-state">Revisión de seguridad necesaria</span><strong class="mail-address"><?= htmlspecialchars($mailState['address']) ?></strong><p>No pudimos confirmar la creación de forma segura. No volveremos a asignar una casilla existente ni crear duplicados.</p><a class="mail-contact" href="mailto:contacto@missuniverso<?= $sede ?>.cl">Consultar con la organización ↗</a>
+             <?php else: ?>
+              <span class="mail-domain">@2026.missuniverso<?= $sede ?>.cl</span><div class="mail-security-note">✓ Verificación de tu correo personal<br>✓ Una casilla por candidata · Dirección exclusiva<br>✓ Contraseña cifrada durante la activación</div>
+              <button type="button" id="autoMailOpen" class="mail-activation-button" aria-expanded="false" aria-controls="autoMailFlow">Activar mi correo institucional de Miss Universo ↗</button>
+              <div id="autoMailFlow" hidden>
+               <div class="mail-step" id="mailStepVerify"><span class="mail-step-number">1 · VERIFICA TU IDENTIDAD</span><p>Enviaremos un código al correo personal registrado al incorporarte al Legado 2026. Caduca en 10 minutos y no debes compartirlo.</p><button class="mail-activation-button" type="button" id="mailSendCode">Enviar código de seguridad</button><div id="mailCodeEntry" hidden><label for="mailSecurityCode">Código de seis dígitos</label><input id="mailSecurityCode" class="form-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000"><button class="mail-activation-button" type="button" id="mailVerifyCode">Verificar código</button></div></div>
+               <form class="mail-step" id="autoMailCreate" hidden><span class="mail-step-number">2 · CREA TU CASILLA</span><label for="autoMailUsername">Usuario del correo institucional</label><input class="form-input" id="autoMailUsername" name="mail_username" required minlength="3" maxlength="32" pattern="[a-z0-9][a-z0-9._-]{1,30}[a-z0-9]" value="<?= htmlspecialchars($mailState?explode('@',$mailState['address'])[0]:$candidate['username']) ?>" <?= $mailState?'readonly':'' ?> autocomplete="off"><span class="mail-domain-suffix">@2026.missuniverso<?= $sede ?>.cl</span><label for="autoMailPassword">Contraseña de la nueva casilla</label><input type="password" class="form-input" id="autoMailPassword" name="mail_password" required minlength="14" maxlength="128" autocomplete="new-password"><small class="mail-help">Entre 14 y 128 caracteres. Incluye mayúsculas, minúsculas y números. Guárdala: no la enviaremos por correo ni la mostraremos después.</small><label for="autoMailPasswordConfirm">Repite la contraseña</label><input type="password" class="form-input" id="autoMailPasswordConfirm" required minlength="14" maxlength="128" autocomplete="new-password"><label class="mailbox-consent"><input type="checkbox" name="mail_consent" value="1" required> Quiero crear y utilizar esta casilla personal y profesional de Miss Universo <?= $sedeTitle ?> 2026.</label><button class="mail-activation-button" type="submit" id="autoMailSubmit">Crear y activar mi casilla</button></form>
+              </div>
+              <div id="autoMailStatus" class="mail-live-status" role="status" aria-live="polite"></div><a id="autoMailWebmail" class="mail-activation-button" href="/2026/correo/" hidden>Abrir mi bandeja institucional ↗</a>
+              <script type="application/json" id="autoMailSettings"><?= json_encode(['state'=>$mailState,'csrf'=>$activationCsrf,'enabled'=>!empty($activationConfig['enabled'])],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_QUOT|JSON_HEX_APOS) ?></script>
+             <?php endif; ?>
+            </section>
         </div>
 
         <form id="profileForm" onsubmit="saveProfile(event);">
@@ -834,7 +867,7 @@ $baseUrl = "https://missuniverso{$sede}.cl";
                         <strong>Agregar Foto a mi Portafolio</strong>
                         <div class="form-help">Sube fotos de tus desfiles, sesiones o proyectos</div>
                     </div>
-                    <input type="file" id="fileGalleryPhoto" accept="image/*" style="display:none;" onchange="uploadPhoto('gallery', this);">
+                    <input type="file" id="fileGalleryPhoto" accept="image/*" multiple style="display:none;" onchange="uploadPhoto('gallery', this);">
 
                     <div class="gallery-admin-grid" id="galleryContainer">
                         <?php
@@ -853,30 +886,14 @@ $baseUrl = "https://missuniverso{$sede}.cl";
                 </div>
             </div>
 
-            <!-- SECCIÓN 2.5: Video Reel de Pasarela HD -->
-            <div class="glass section-card">
-                <div class="section-header">
-                    <span>🎥</span>
-                    <h3>Video Reel de Pasarela & Presentación HD</h3>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Video de Pasarela Oficial (.mp4, .mov o enlace web)</label>
-                    <?php
-                    $vids = [];
-                    if (!empty($candidate['videos_gallery'])) {
-                        $vids = json_decode($candidate['videos_gallery'], true) ?: [];
-                    }
-                    $candVideoUrl = !empty($vids) ? $vids[0] : '';
-                    ?>
-                    <div id="videoPreviewWrap" style="<?= empty($candVideoUrl) ? 'display:none;' : '' ?> margin-bottom:15px; border-radius:16px; overflow:hidden; border:1px solid var(--border-gold); background:#000;">
-                        <video id="editorVideoElem" playsinline controls style="width:100%; max-height:360px; display:block;" src="<?= htmlspecialchars($candVideoUrl) ?>"></video>
-                    </div>
-                    <input type="text" id="videoUrlInput" class="form-input" value="<?= htmlspecialchars($candVideoUrl) ?>" placeholder="/uploads/... o https://..." oninput="handleVideoUrlChange(this.value);">
-                    <div class="form-help">Enlace directo a tu video de pasarela o presentación en alta definición. Se mostrará en tu perfil editorial y salón de legado.</div>
-                </div>
+            <!-- Archivo completo de videos -->
+            <div class="glass section-card"><div class="section-header"><span>🎥</span><h3>Tu archivo de videos</h3></div>
+            <?php $vids=json_decode($candidate['videos_gallery']??'[]',true)?:[];$candVideoUrl=$vids[0]??''; ?>
+            <p class="form-help">Conserva todos tus videos de presentación, pasarela y nuevos proyectos. Puedes añadir varios enlaces o subir archivos MP4, MOV y WebM.</p>
+            <label class="form-label" for="videosGalleryInput">Enlaces de tus videos · uno por línea</label><textarea id="videosGalleryInput" class="form-textarea" rows="5" oninput="renderVideoArchive()"><?= htmlspecialchars(implode("\n",$vids)) ?></textarea>
+            <div id="videoArchivePreview" class="editor-video-archive"></div>
+            <label class="file-upload-btn" for="videoFilesInput">＋ Subir videos a mi archivo</label><input id="videoFilesInput" type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" multiple hidden onchange="uploadArchiveVideos(this)"><p class="form-help">Hasta 40 videos o referencias. Máximo 100 MB por archivo. Los enlaces de Drive se abren en su servicio original.</p><p id="videoUploadStatus" class="form-help" role="status"></p>
             </div>
-
             <!-- SECCIÓN 3: Identidad y Contacto -->
             <div class="glass section-card">
                 <div class="section-header">
@@ -891,9 +908,9 @@ $baseUrl = "https://missuniverso{$sede}.cl";
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Correo Personal (Destino de Forwarding)</label>
+                    <label class="form-label">Correo personal de contacto</label>
                     <input type="email" id="email_personal" class="form-input" value="<?= htmlspecialchars($candidate['email_personal']) ?>" required>
-                    <div class="form-help">Los correos enviados a <strong><span class="dyn-user"><?= htmlspecialchars($candidate['username']) ?></span>@2026.missuniverso<?= $sede ?>.cl</strong> se reenviarán a esta casilla.</div>
+                    <div class="form-help">Aquí recibirás los enlaces para acceder a tu perfil. Esta dirección es independiente de tu casilla institucional.</div>
                 </div>
 
                 <div class="form-group">
@@ -907,6 +924,7 @@ $baseUrl = "https://missuniverso{$sede}.cl";
                 </div>
             </div>
 
+<?php $profileDetails=legado_profile_details($candidate); ?><div class="glass section-card"><div class="section-header"><span>✦</span><h3>Trayectoria, intereses y proyectos</h3></div><?php foreach(['education'=>'Formación y estudios','hobbies'=>'Intereses y actividades','future_aspirations'=>'Sueños y proyectos','height'=>'Estatura (metros o centímetros)','eye_color'=>'Color de ojos','hair_color'=>'Color de cabello'] as $field=>$label): ?><div class="form-group"><label class="form-label" for="detail_<?= $field ?>"><?= $label ?></label><textarea class="form-textarea" id="detail_<?= $field ?>" rows="<?= in_array($field,['height','eye_color','hair_color'])?1:3 ?>" maxlength="5000"><?= htmlspecialchars((string)($profileDetails[$field]??'')) ?></textarea></div><?php endforeach; ?></div>
             <!-- SECCIÓN 4: Redes Sociales y Links del Linktree -->
             <div class="glass section-card">
                 <div class="section-header">
@@ -953,7 +971,7 @@ $baseUrl = "https://missuniverso{$sede}.cl";
         </form>
     </main>
 
-    <script>
+    <script nonce="<?= htmlspecialchars($activationNonce,ENT_QUOTES,'UTF-8') ?>">
         const MAGIC_TOKEN = "<?= htmlspecialchars($candidate['magic_token']) ?>";
         const CURRENT_SEDE = "<?= $sede ?>";
         let currentUsername = "<?= htmlspecialchars($candidate['username']) ?>";
@@ -969,11 +987,23 @@ $baseUrl = "https://missuniverso{$sede}.cl";
             renderCustomLinksRows();
         });
 
+
+        async function activateMailbox(event){
+            event.preventDefault();
+            const form=event.currentTarget,button=form.querySelector('button'),result=document.getElementById('mailboxResult');
+            button.disabled=true; result.textContent='Creando y verificando tu casilla…';
+            const body=new FormData(form);body.append('action','activate_mailbox');body.append('token',new URLSearchParams(location.search).get('token')||'');
+            try{const response=await fetch('/2026/api.php',{method:'POST',body});const data=await response.json();
+                if(data.status!=='success')throw new Error(data.message||'No se pudo confirmar la casilla.');
+                form.reset();result.textContent='Casilla activa: '+data.mailbox.address+'. Usa esta dirección y tu contraseña en el webmail del hosting.';
+                form.querySelectorAll('input').forEach(input=>input.disabled=true);
+            }catch(error){form.querySelector('[name="mail_password"]').value='';result.textContent=error.message;button.disabled=false;}
+        }
+
         function updateUserPreview(val) {
             const clean = val.toLowerCase().replace(/[^a-z0-9._-]/g, '');
             currentUsername = clean || 'usuario';
             document.querySelectorAll('.dyn-user').forEach(el => el.textContent = currentUsername);
-            document.getElementById('dynInstEmail').textContent = `${currentUsername}@2026.missuniverso${CURRENT_SEDE}.cl`;
             document.getElementById('btnLiveEditorial').href = `/2026/${currentUsername}`;
             document.getElementById('btnLiveLinktree').href = `/2026/#${currentUsername}`;
         }
@@ -1016,7 +1046,8 @@ $baseUrl = "https://missuniverso{$sede}.cl";
         }
 
         // Subir Foto (Principal o Galería)
-        async function uploadPhoto(type, input) {
+        async function uploadPhoto(type,input){const files=Array.from(input.files||[]);for(const file of files)await uploadPhotoSingle(type,{files:[file],value:''});input.value='';}
+        async function uploadPhotoSingle(type, input) {
             if (!input.files || !input.files[0]) return;
             const file = input.files[0];
             const fd = new FormData();
@@ -1119,7 +1150,7 @@ $baseUrl = "https://missuniverso{$sede}.cl";
             }
         }
 
-        let currentVideoUrl = "<?= htmlspecialchars($candVideoUrl) ?>";
+        let currentVideoUrl = <?= json_encode($candVideoUrl,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
         function handleVideoUrlChange(val) {
             currentVideoUrl = val.trim();
             const wrap = document.getElementById('videoPreviewWrap');
@@ -1132,6 +1163,15 @@ $baseUrl = "https://missuniverso{$sede}.cl";
                 vid.src = '';
             }
         }
+
+
+        const videoPlaybackMap=<?= json_encode(array_combine($vids,array_map('legado_playback_url',$vids))?:new stdClass(),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_UNESCAPED_SLASHES) ?>;
+        function renderVideoArchive(){
+         const urls=document.getElementById('videosGalleryInput').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);const box=document.getElementById('videoArchivePreview');box.replaceChildren();
+         urls.forEach((url,index)=>{const card=document.createElement('div');card.className='editor-video-item';const label=document.createElement('strong');label.textContent='Archivo '+(index+1);card.append(label);const valid=url.startsWith('/uploads/')||url.startsWith('/watermarked/')||url.startsWith('https://');if(valid&&/\.(mp4|mov|webm|m4v)(?:[?#].*)?$/i.test(url)){const video=document.createElement('video');video.src=videoPlaybackMap[url]||url;video.controls=true;video.preload='none';video.playsInline=true;card.append(video);}else{const link=document.createElement('a');link.textContent=valid?'Abrir enlace externo ↗':'Revisa este enlace';if(valid){link.href=url;link.target='_blank';link.rel='noopener noreferrer';}card.append(link);}const text=document.createElement('small');text.textContent=url;card.append(text);box.append(card);});
+        }
+        async function uploadArchiveVideos(input){const files=Array.from(input.files||[]);if(!files.length)return;const submit=document.getElementById('btnSubmitForm');submit.disabled=true;input.disabled=true;const status=document.getElementById('videoUploadStatus');try{for(let i=0;i<files.length;i++){if(files[i].size>100*1024*1024)throw new Error('El archivo '+files[i].name+' supera 100 MB.');status.textContent='Subiendo '+(i+1)+' de '+files.length+'… Mantén esta ventana abierta.';const fd=new FormData();fd.append('action','upload_video');fd.append('token',MAGIC_TOKEN);fd.append('video',files[i]);const r=await fetch('/2026/api.php',{method:'POST',body:fd});const data=await r.json();if(data.status!=='success')throw new Error(data.message||'No se pudo subir el video.');const field=document.getElementById('videosGalleryInput');const urls=field.value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!urls.includes(data.video_url))urls.push(data.video_url);field.value=urls.join('\n');renderVideoArchive();}status.textContent='Videos subidos y añadidos a tu archivo.';}catch(e){status.textContent=e.message;}finally{submit.disabled=false;input.disabled=false;input.value='';}}
+        renderVideoArchive();
 
         // Guardar Perfil Completo
         async function saveProfile(e) {
@@ -1147,6 +1187,7 @@ $baseUrl = "https://missuniverso{$sede}.cl";
             fd.append('email_personal', document.getElementById('email_personal').value.trim());
             fd.append('occupation', document.getElementById('occupation').value.trim());
             fd.append('bio', document.getElementById('bio').value.trim());
+            const details={};for(const key of ['education','hobbies','future_aspirations','height','eye_color','hair_color'])details[key]=document.getElementById('detail_'+key).value.trim();fd.append('profile_details',JSON.stringify(details));
             fd.append('instagram', document.getElementById('instagram').value.trim());
             fd.append('tiktok', document.getElementById('tiktok').value.trim());
             fd.append('whatsapp', document.getElementById('whatsapp').value.trim());
@@ -1155,7 +1196,7 @@ $baseUrl = "https://missuniverso{$sede}.cl";
             fd.append('is_minimal_record', document.getElementById('is_minimal_record').checked ? '1' : '0');
             
             // Video de Pasarela
-            const vidsToSave = currentVideoUrl ? [currentVideoUrl] : [];
+            const vidsToSave = [...new Set(document.getElementById('videosGalleryInput').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean))];
             fd.append('videos_gallery', JSON.stringify(vidsToSave));
 
             // Filtrar enlaces vacíos
