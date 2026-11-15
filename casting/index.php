@@ -1349,10 +1349,17 @@ $refCode = trim($_GET['ref'] ?? '');
                     <label class="payment-radio-label">
                         <input type="radio" name="modalidad_pago" value="programa_embajadora">
                         <div class="radio-info">
-                            <strong>👑 Plan Embajadora (Meta Beca 100% Gratis)</strong>
-                            <small>Invitaré a mis amigas al certamen (-$50.000 por cada una) para participar costo cero.</small>
+                            <strong>👑 Plan Embajadora (Abono de Activación $70.000)</strong>
+                            <small>Abono de $70.000 obligatorio para asegurar cupo y activar tu código. Al referir a 5 candidatas, ¡tu participación es 100% GRATIS y la organización te reembolsa el 100% de tus $70.000!</small>
                         </div>
                     </label>
+                </div>
+
+                <!-- Aviso Obligatorio de Abono -->
+                <div style="background: rgba(245, 36, 95, 0.12); border: 1px solid rgba(245, 36, 95, 0.35); border-left: 4px solid var(--accent-pink, #f5245f); border-radius: 14px; padding: 14px 18px; margin-top: 18px; font-size: 0.85rem; color: #f1f5f9; line-height: 1.5;">
+                    ⚠️ <strong style="color: #ff8fab;">Regla Oficial de Inscripción:</strong> 
+                    Para asegurar tu cupo y validar tu postulación oficial, <strong>es obligatorio realizar el Abono Inicial de $70.000</strong> (o el pago de contado/cuota elegido). 
+                    <strong>No se reservan cupos sin abono confirmado.</strong> En el Plan Embajadora, tu abono de $70.000 activa tu código y <strong>se te devuelve íntegramente (100% de reembolso)</strong> una vez confirmadas tus 5 candidatas referidas.
                 </div>
 
                 <!-- 6. Fotografías de Preselección -->
@@ -1420,8 +1427,18 @@ $refCode = trim($_GET['ref'] ?? '');
                 </div>
             </div>
 
+            <!-- Recordatorio de Abono Obligatorio -->
+            <div style="background: rgba(245, 36, 95, 0.15); border: 1px solid rgba(245, 36, 95, 0.4); border-radius: 12px; padding: 12px 16px; margin: 15px 0; font-size: 0.82rem; color: #f8fafc; line-height: 1.4; text-align: left;">
+                📌 <strong style="color: #ff8fab;">Paso obligatorio para validar tu cupo:</strong><br>
+                Para hacer oficial tu postulación y activar formalmente tu código de Embajadora, debes realizar tu <strong>abono de reserva de $70.000</strong>. No se confirman cupos sin abono acreditado.
+            </div>
+
+            <a href="https://wa.me/56956762116?text=<?= urlencode("¡Hola! Acabo de completar mi postulación a Miss Universe {$sedeNombre} 2027 y quiero coordinar la transferencia de mi abono de $70.000.") ?>" target="_blank" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; background:linear-gradient(135deg, #25d366, #128c7e); color:#fff; font-weight:800; font-size:0.9rem; padding:12px; border-radius:10px; text-decoration:none; margin-bottom:10px; box-shadow:0 6px 20px rgba(37,211,102,0.3);">
+                💬 Coordinar Abono $70.000 por WhatsApp
+            </a>
+
             <a id="btnModalWaShare" href="#" target="_blank" class="btn-wa-share">
-                <span>📲 Compartir mi Enlace por WhatsApp</span>
+                <span>📲 Compartir mi Enlace con Amigas</span>
             </a>
 
             <button type="button" class="btn-copy-link" id="btnCopyRefLink" onclick="copyReferralLink();">
