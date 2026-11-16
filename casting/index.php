@@ -1071,10 +1071,13 @@ $refCode = trim($_GET['ref'] ?? '');
             </div>
         </a>
 
-        <!-- Conmutador Arica / Iquique -->
-        <div class="sede-switch-nav">
-            <a href="/casting/?sede=iquique<?= $refCode ? '&ref=' . urlencode($refCode) : '' ?>" class="btn-switch <?= $isIquique ? 'active' : '' ?>">Iquique</a>
-            <a href="/casting/?sede=arica<?= $refCode ? '&ref=' . urlencode($refCode) : '' ?>" class="btn-switch <?= !$isIquique ? 'active' : '' ?>">Arica</a>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <a href="/que-incluye/" target="_blank" class="btn-switch" style="background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.4); color:#ffd700; text-decoration:none;">✨ ¿Qué Incluye?</a>
+            <!-- Conmutador Arica / Iquique -->
+            <div class="sede-switch-nav">
+                <a href="/casting/?sede=iquique<?= $refCode ? '&ref=' . urlencode($refCode) : '' ?>" class="btn-switch <?= $isIquique ? 'active' : '' ?>">Iquique</a>
+                <a href="/casting/?sede=arica<?= $refCode ? '&ref=' . urlencode($refCode) : '' ?>" class="btn-switch <?= !$isIquique ? 'active' : '' ?>">Arica</a>
+            </div>
         </div>
     </header>
 
@@ -1362,6 +1365,17 @@ $refCode = trim($_GET['ref'] ?? '');
                     <strong>No se reservan cupos sin abono confirmado.</strong> En el Plan Embajadora, tu abono de $70.000 activa tu código y <strong>se te devuelve íntegramente (100% de reembolso)</strong> una vez confirmadas tus 5 candidatas referidas.
                 </div>
 
+                <!-- Enlace Oficial a Qué Incluye y Bases -->
+                <div style="background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.28); border-radius: 14px; padding: 14px 18px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+                    <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.4;">
+                        ✨ <strong style="color: #ffd700;">¿Quieres revisar todo lo que incluye tu participación y las bases?</strong>
+                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Vestuarios incluidos, talleres de pasarela y oratoria, cobertura fotográfica, correo corporativo y proyección por 1 año.</div>
+                    </div>
+                    <a href="/que-incluye/" target="_blank" style="background: linear-gradient(135deg, #d4af37, #f5245f); color: #fff; padding: 9px 18px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+                        Ver Qué Incluye y Bases ➜
+                    </a>
+                </div>
+
                 <!-- 6. Fotografías de Preselección -->
                 <div class="section-header">
                     <span class="section-number">6</span>
@@ -1393,7 +1407,7 @@ $refCode = trim($_GET['ref'] ?? '');
                 <div class="terms-group">
                     <input type="checkbox" id="acepto_requisitos" required>
                     <label for="acepto_requisitos">
-                        Declaro ser mayor de 18 años, contar con nacionalidad chilena o residencia legal, y que los antecedentes entregados son verídicos para la evaluación oficial de la Dirección de Miss Universe <?= $sedeNombre ?> 2027.
+                        Declaro ser mayor de 18 años, contar con nacionalidad chilena o residencia legal, aceptar las <a href="/que-incluye/" target="_blank" style="color:var(--accent-pink, #f5245f); font-weight:800; text-decoration:underline;">Bases Oficiales y Entregables 2027</a>, y que los antecedentes entregados son verídicos para la evaluación oficial de la Dirección de Miss Universe <?= $sedeNombre ?> 2027.
                     </label>
                 </div>
 
